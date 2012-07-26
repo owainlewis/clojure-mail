@@ -1,7 +1,11 @@
 (ns clojure-mail.core
-  (:import (java.util Properties)
-           (javax.mail Session Store Folder Message)
-           (javax.mail.internet InternetAddress)))
+  (:import [javax.mail Session Store Folder Message]
+           [javax.mail.internet InternetAddress]))
 
-(defn IMAP
-  [ ] )
+;; Focus will be more on the reading and parsing of emails. Sending messages should be more trivial.
+
+;; IMAP client interface
+
+(defn IMAP [] )
+
+(defn SMTP [] )
