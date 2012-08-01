@@ -22,7 +22,9 @@
     p))
 
 (defn store
-  "An abstract class that models a message store and its access protocol, for storing and retrieving messages. Subclasses provide actual implementations."
+  "An abstract class that models a message store and its access protocol,
+  for storing and retrieving messages.
+  Subclasses provide actual implementations."
   [protocol server user pass]
   (let [p (as-props [["mail.store.protocol" protocol]])]
     (doto (.getStore (Session/getDefaultInstance p) protocol)
@@ -52,8 +54,7 @@
 (defn folders 
   ([s] (folders s (.getDefaultFolder s)))
   ([s f]
-     (let [sub? #(if (= 0 (bit-and (.getType %) 
-                                   Folder/HOLDS_FOLDERS)) false true)]
+     (let [sub? #(if (= 0 (bit-and (.getType %) Folder/HOLDS_FOLDERS)) false true)]
        (map #(cons (.getName %) (if (sub? %) (folders s %))) (.list f)))))
 
 (defn messages [s fd & opt]
