@@ -35,7 +35,8 @@
   (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
 
 (defn- get-default-folder
-  ^{:doc "Returns a Folder object that represents the 'root' of the default namespace presented to the user by the Store."}
+  ^{:doc "Returns a Folder object that represents the 'root' of the default
+          namespace presented to the user by the Store."}
   [store]
   (.getDefaultFolder store))
 
