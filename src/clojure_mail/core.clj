@@ -14,31 +14,32 @@
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
-(defn as-props
-  [m]
-  (let [p (Properties.)]
+;; TODO map of gmail folder defaults
+
+(def gmail-sent "[Gmail]/Sent Mail")
+
+(defn- store
+  "An abstract class that models a message store and its access protocol,
+  for storing and retrieving messages. Subclasses provide actual implementations."
+  [protocol server user pass]
+  (letfn [(as-properties [m] (let [p (Properties.)]
     (doseq [[k v] m]
       (.setProperty p (str k) (str v)))
-    p))
-
-(defn store
-  "An abstract class that models a message store and its access protocol,
-  for storing and retrieving messages.
-  Subclasses provide actual implementations."
-  [protocol server user pass]
-  (let [p (as-props [["mail.store.protocol" protocol]])]
+    p))]
+  (let [p (as-properties [["mail.store.protocol" protocol]])]
     (doto (.getStore (Session/getDefaultInstance p) protocol)
-      (.connect server user pass))))
+      (.connect server user pass)))))
 
-(defn sub-folder?
-  [f] )
+(def- sub-folder?
+  (fn [_]
+  (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
 
-(defn get-default-folder
+(defn- get-default-folder
   ^{:doc "Returns a Folder object that represents the 'root' of the default namespace presented to the user by the Store."}
   [store]
   (.getDefaultFolder store))
 
-(defn get-folder
+(defn- get-folder
   "Return the Folder object corresponding to the given name."
   [store name]
   (.getFolder store name))
@@ -54,8 +55,11 @@
 (defn folders 
   ([s] (folders s (.getDefaultFolder s)))
   ([s f]
-     (let [sub? #(if (= 0 (bit-and (.getType %) Folder/HOLDS_FOLDERS)) false true)]
-       (map #(cons (.getName %) (if (sub? %) (folders s %))) (.list f)))))
+  (map
+    #(cons (.getName %)
+      (if (sub-folder? %)
+        (folders s %)))
+          (.list f))))
 
 (defn messages [s fd & opt]
   (let [fd (doto (.getFolder s fd) (.open Folder/READ_ONLY))
@@ -65,11 +69,23 @@
                (.getMessages fd))]
     (map #(vector (.getUID fd %) %) msgs)))
 
+(defn read-msg
+  "Read a single message and print out to the terminal"
+  [msg] msg)
+
+(defn print-all-messages
+  "Debugging only. Prints out all UIDs and message instances to console"
+  [messages]
+  (doseq [[uid msg] messages]
+    (println 
+      (format "%s - %s" uid msg))))
+  
 (defn dump [msgs]
   (doseq [[uid msg] msgs]
     (.writeTo msg (java.io.FileOutputStream. (str uid)))))
 
 (defn mail-store
+  "Create a new mail store"
   [client user pass]
   (let [protocol (get client :protocol)
         server (get client :server)]

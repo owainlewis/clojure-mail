@@ -20,6 +20,8 @@ IMAP
 
 (get-folder store "INBOX")
 
+(take 10 (messages store "INBOX"))
+
 ```
 
 FIXME
