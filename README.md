@@ -2,6 +2,8 @@
 
 ** IN PROGRESS **
 
+[![Build Status](https://secure.travis-ci.org/owainlewis/clojure-mail.png?branch=master)](http://travis-ci.org/owainlewis/clojure-mail)
+
 A clojure library mainly aimed at parsing, downloading and reading email.
 
 ## Usage
