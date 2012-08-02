@@ -30,7 +30,7 @@
     (doto (.getStore (Session/getDefaultInstance p) protocol)
       (.connect server user pass)))))
 
-(def- sub-folder?
+(def sub-folder?
   (fn [_]
   (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
 
@@ -51,7 +51,7 @@
   [store]
   (let [default (get-default-folder store)]
     (map (fn [x] (.getName x))
-      (.list (get-default-folder c)))))
+      (.list (get-default-folder store)))))
   
 (defn folders 
   ([s] (folders s (.getDefaultFolder s)))
