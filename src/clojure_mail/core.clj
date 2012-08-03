@@ -70,16 +70,35 @@
                (.getMessages fd))]
     (map #(vector (.getUID fd %) %) msgs)))
 
-(defn read-msg
-  "Read a single message and print out to the terminal"
-  [msg] msg)
+(defn message-content-type
+  "Returns the content type of a message object"
+  [^javax.mail.internet.MimeMultipart msg]
+  (.getContentType msg))
 
-(defn print-all-messages
+(defn get-msg-size
+  "Returns message size in bytes"
+  [msg]
+  (.getSize msg))
+
+(defn get-msg-parts
+  [^javax.mail.internet.MimeMultipart msg]
+  (let [no-parts (get (bean msg) :count)
+        parts (map #(.getBodyPart msg %) (range no-parts))]
+    parts))
+
+(defn read-msg
+  "Read a single message"
+  [msg]
+  (let [message (clojure.core/bean msg)
+        from (get message :from)]
+    from))
+
+(defn print-message
   "Debugging only. Prints out all UIDs and message instances to console"
-  [messages]
-  (doseq [[uid msg] messages]
+  [message]
+  (doseq [[uid msg] message]
     (println 
-      (format "%s - %s" uid msg))))
+      (format "%s - %s" uid (bean msg)))))
   
 (defn dump [msgs]
   (doseq [[uid msg] msgs]
