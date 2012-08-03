@@ -9,7 +9,9 @@
 ;; Sending email is more easily handled by other libs
 ;; IMAP client interface
 
-(defprotocol IMAP [] )
+(defprotocol Imap
+  "Imap protocol"
+  (connect [a b] ""))
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
