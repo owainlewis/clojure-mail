@@ -9,6 +9,15 @@
 ;; Sending email is more easily handled by other libs
 ;; IMAP client interface
 
+;; TODO Refactor everything
+
+(def settings
+  (ref {:email "" :password ""}))
+
+(defn get-setting [x] (x (deref settings)))
+
+(def auth ((juxt :email :password) (deref settings)))
+
 (defprotocol Imap
   "Imap protocol"
   (connect [a b] ""))
@@ -52,8 +61,23 @@
   [store]
   (let [default (get-default-folder store)]
     (map (fn [x] (.getName x))
-      (.list (get-default-folder store)))))
-  
+         (.list (get-default-folder store)))))
+
+(defn all-messages
+  "Refactored messages fn below"
+  [store folder]
+  (let [s (.getDefaultFolder s)
+        inbox (.getFolder s folder)
+        folder (doto inbox (.open Folder/READ_ONLY))]
+    (.getMessages folder)))
+
+(defn message-headers
+  "Returns all the headers from a message"
+  [^com.sun.mail.imap.IMAPMessage msg]
+  (let [headers (.getAllHeaders msg)
+        results (enumeration-seq headers)]
+    (map #(vector (.getName %) (.getValue %)) results)))
+
 (defn folders 
   ([s] (folders s (.getDefaultFolder s)))
   ([s f]
@@ -70,6 +94,9 @@
                (.search fd (FlagTerm. (Flags. flags) set)) 
                (.getMessages fd))]
     (map #(vector (.getUID fd %) %) msgs)))
+
+(defn message [s fd uid]
+  ())
 
 (defn message-content-type
   "Returns the content type of a message object"
@@ -104,10 +131,10 @@
 
 (defn read-msg
   "Read a single message"
-  [msg]
+  ([msg]
   (let [message (clojure.core/bean msg)
         from (get message :from)]
-    from))
+    from)))
 
 (defn print-message
   "Debugging only. Prints out all UIDs and message instances to console"
