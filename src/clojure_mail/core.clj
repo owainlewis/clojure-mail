@@ -66,7 +66,7 @@
 (defn all-messages
   "Refactored messages fn below"
   [store folder]
-  (let [s (.getDefaultFolder s)
+  (let [s (.getDefaultFolder store)
         inbox (.getFolder s folder)
         folder (doto inbox (.open Folder/READ_ONLY))]
     (.getMessages folder)))
