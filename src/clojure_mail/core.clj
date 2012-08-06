@@ -11,10 +11,7 @@
 
 ;; TODO Refactor everything
 
-(def settings
-  (ref {:email "" :password ""}))
-
-(defn get-setting [x] (x (deref settings)))
+(def settings (ref {:email "" :password ""}))
 
 (def auth ((juxt :email :password) (deref settings)))
 
