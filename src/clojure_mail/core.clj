@@ -21,6 +21,8 @@
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
+(def last-uid (com.sun.mail.imap.IMAPFolder/LASTUID))
+
 ;; TODO map of gmail folder defaults
 
 (def gmail-sent "[Gmail]/Sent Mail")
@@ -92,9 +94,6 @@
                (.getMessages fd))]
     (map #(vector (.getUID fd %) %) msgs)))
 
-(defn message [s fd uid]
-  ())
-
 (defn message-content-type
   "Returns the content type of a message object"
   [^javax.mail.internet.MimeMultipart msg]
@@ -110,7 +109,16 @@
 (defn is-mime-type?
   [msg type]
   (.isMimeType msg type))
-  
+
+(defn message-count
+  "Returns the number of messages in a folder"
+  [store folder]
+  (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
+    (.getMessageCount fd)))
+
+(defmacro with-folder [folder-name store]
+  `())
+
 (defn get-body-text
   "Determine the function to call to get the body text of a message"
   [msg type]
