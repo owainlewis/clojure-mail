@@ -1,4 +1,7 @@
-(namespace clojure-mail.store)
+(ns clojure-mail.store
+    (:import [java.util Properties]
+           [javax.mail Session Store]
+           [javax.mail.search FlagTerm]))
 
 (defn- store
   "An abstract class that models a message store and its access protocol,
@@ -31,3 +34,13 @@
   "Return the Folder object corresponding to the given name."
   [^com.sun.mail.imap.IMAPStore s name]
   (.getFolder s name))
+
+(defn mail-store
+  "Create a new mail store"
+  [client user pass]
+  (let [protocol (get client :protocol)
+        server (get client :server)]
+    (try
+      (store protocol server user pass)
+    (catch javax.mail.AuthenticationFailedException e
+      (prn "Invalid credentials")))))
