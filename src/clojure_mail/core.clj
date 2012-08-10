@@ -16,13 +16,7 @@
 (defonce auth ((juxt :email :password) (deref settings)))
 
 (defprotocol Imap
-<<<<<<< HEAD
   (connect [a b] "connect to IMAP server"))
-=======
-  "Imap protocol"
-  (authorize [credentials])
-  (search [folder q]))
->>>>>>> 02875d1e52bdf210824e10eecfb55780cd671fc0
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
