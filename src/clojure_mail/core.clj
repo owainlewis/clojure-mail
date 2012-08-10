@@ -16,8 +16,7 @@
 (def auth ((juxt :email :password) (deref settings)))
 
 (defprotocol Imap
-  "Imap protocol"
-  (connect [a b] ""))
+  (connect [a b] "connect to IMAP server"))
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
@@ -26,6 +25,11 @@
 ;; TODO map of gmail folder defaults
 
 (def gmail-sent "[Gmail]/Sent Mail")
+
+;; ============================
+;; Move to store namespace
+;; com.sun.mail.imap.IMAPStore
+;; ============================
 
 (defn- store
   "An abstract class that models a message store and its access protocol,
@@ -39,20 +43,31 @@
     (doto (.getStore (Session/getDefaultInstance p) protocol)
       (.connect server user pass)))))
 
-(def sub-folder?
-  (fn [_]
-  (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
+(defn connected?
+  "Returns true if a connection is established"
+  [^com.sun.mail.imap.IMAPStore s]
+  (.isConnected s))
+
+(defn close
+  [^com.sun.mail.imap.IMAPStore s]
+  (.close s))
 
 (defn- get-default-folder
   ^{:doc "Returns a Folder object that represents the 'root' of the default
           namespace presented to the user by the Store."}
-  [store]
-  (.getDefaultFolder store))
+  [^com.sun.mail.imap.IMAPStore s]
+  (.getDefaultFolder s))
 
 (defn- get-folder
   "Return the Folder object corresponding to the given name."
-  [store name]
-  (.getFolder store name))
+  [^com.sun.mail.imap.IMAPStore s name]
+  (.getFolder s name))
+
+;; End Store
+
+(def sub-folder?
+  (fn [_]
+  (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
 
 (defn folder-seq
   "Used to get a sequence of folder names. Note that this does not recursively
@@ -63,8 +78,10 @@
          (.list (get-default-folder store)))))
 
 (defn all-messages
-  "Refactored messages fn below"
-  [store folder]
+  ^{:doc "Refactored messages fn below. Given a store and folder returns all
+   messages. Be aware that there may be a large volume of mail so consider
+   taking x items rather than the entire contents of the folder"}
+  [^com.sun.mail.imap.IMAPStore store folder]
   (let [s (.getDefaultFolder store)
         inbox (.getFolder s folder)
         folder (doto inbox (.open Folder/READ_ONLY))]
@@ -77,7 +94,8 @@
         results (enumeration-seq headers)]
     (map #(vector (.getName %) (.getValue %)) results)))
 
-(defn folders 
+(defn folders
+  "Returns a seq of all IMAP folders inlcuding sub folders"
   ([s] (folders s (.getDefaultFolder s)))
   ([s f]
   (map
