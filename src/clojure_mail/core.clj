@@ -13,14 +13,20 @@
 
 (def settings (ref {:email "" :password ""}))
 
-(def auth ((juxt :email :password) (deref settings)))
+(defonce auth ((juxt :email :password) (deref settings)))
 
 (defprotocol Imap
+<<<<<<< HEAD
   (connect [a b] "connect to IMAP server"))
+=======
+  "Imap protocol"
+  (authorize [credentials])
+  (search [folder q]))
+>>>>>>> 02875d1e52bdf210824e10eecfb55780cd671fc0
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
-(def last-uid (com.sun.mail.imap.IMAPFolder/LASTUID))
+(defonce last-uid (com.sun.mail.imap.IMAPFolder/LASTUID))
 
 ;; TODO map of gmail folder defaults
 
@@ -118,6 +124,7 @@
   (.getContentType msg))
 
 ;; There are a ton of these methods that need adding
+;; Split into Mime namespace and do the same for other classes here when doing refactor
 
 (defn get-msg-size
   "Returns message size in bytes"
@@ -134,8 +141,12 @@
   (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
 
-(defmacro with-folder [folder-name store]
-  `())
+(def ^:dynamic current-folder)
+
+(defmacro with-folder [folder store & body]
+  `(let [fd# (doto (.getFolder ~store ~folder) (.open Folder/READ_ONLY))]
+     (binding [current-folder fd#]
+       (do ~@body))))
 
 (defn get-body-text
   "Determine the function to call to get the body text of a message"
