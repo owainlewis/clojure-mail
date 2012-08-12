@@ -14,7 +14,7 @@ IMAP
 
 ;; Create a mail store 
 
-(def store (mail-store gmail "zaphrauk@gmail.com" "password"))
+(def store (mail-store gmail "user@gmail.com" "password"))
 
 ;; Get all folders
 
@@ -26,6 +26,15 @@ IMAP
 
 ```
 
+Print out a list of all the folders for an IMAP session
+
+```clojure
+
+(def s (mail-store gmail "user@gmail.com" "pass"))
+(folders s)
+
+```
+
 Get 5 most recent messages from the spam folder
 
 ```
@@ -34,10 +43,14 @@ Get 5 most recent messages from the spam folder
 
 ## Extracting data from messages
 
-```
+```clojure
+
+(def s (mail-store gmail "user@gmail.com" "pass"))
+
 (def msg (first (all-messages s "INBOX")))
 
 (from msg)
+
 (subject msg)
 
 ;; Extract the body content for each message part

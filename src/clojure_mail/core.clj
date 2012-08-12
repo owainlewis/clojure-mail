@@ -79,15 +79,6 @@
   (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
 
-(defn get-body-text
-  "Determine the function to call to get the body text of a message"
-  [msg type]
-  (condp = type
-    "multipart/alternative" :multipart
-    "text/html" :html
-    "text/plain" :plain
-    (str "unexpected type, \"" type \")))
-
 (defn get-msg-parts
   [^javax.mail.internet.MimeMultipart msg]
   (let [no-parts (get (clojure.core/bean msg) :count)

@@ -1,6 +1,15 @@
 (ns clojure-mail.message
   (import [javax.mail.internet MimeMultipart]))
 
+(defn mime-type
+  "Determine the function to call to get the body text of a message"
+  [msg type]
+  (condp = type
+    "multipart/alternative" :multipart
+    "text/html" :html
+    "text/plain" :plain
+    (str "unexpected type, \"" type \")))
+
 (defn from [m]
   (.getFrom m))
 
