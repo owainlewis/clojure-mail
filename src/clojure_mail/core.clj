@@ -23,6 +23,8 @@
 
 (def gmail-sent "[Gmail]/Sent Mail")
 
+(def gmail-spam "[Gmail]/Spam")
+
 ;; End Store
 
 (def sub-folder?
@@ -59,10 +61,7 @@
 
 (defn messages [s fd & opt]
   (let [fd (doto (.getFolder s fd) (.open Folder/READ_ONLY))
-        [flags set] opt
-        msgs (if opt 
-               (.search fd (FlagTerm. (Flags. flags) set)) 
-               (.getMessages fd))]
+        msgs (.getMessages fd)]
     (map #(vector (.getUID fd %) %) msgs)))
 
 (defn message-content-type
@@ -109,10 +108,6 @@
     (println 
       (format "%s - %s" uid (clojure.core/bean msg)))))
 
-(defn dump-2 [msgs]
-  (doseq [[uid msg] msgs]
-    (prn msg)))
-
 (defn dump [msgs]
   (doseq [[uid msg] msgs]
-    (.writeTo msg (java.io.FileOutputStream. (str uid)))))
+    (.writeTo msg (java.io.FileOutputStream. (format "/usr/local/messages/%s" (str uid))))))

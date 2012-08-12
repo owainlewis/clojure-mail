@@ -54,3 +54,6 @@
   [msg]
   (let [parts (message-parts msg)]
     (map #(.getContent %) parts)))
+
+(defn dump-message [msg]
+  ())

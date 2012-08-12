@@ -26,6 +26,26 @@ IMAP
 
 ```
 
+Get 5 most recent messages from the spam folder
+
+```
+(take 5 (reverse (all-messages s gmail-spam)))
+```
+
+## Extracting data from messages
+
+```
+(def msg (first (all-messages s "INBOX")))
+
+(from msg)
+(subject msg)
+
+;; Extract the body content for each message part
+
+(message-body-map msg)
+
+```
+
 FIXME
 
 ## License
