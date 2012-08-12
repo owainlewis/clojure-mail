@@ -1,7 +1,6 @@
 (ns clojure-mail.store
     (:import [java.util Properties]
-           [javax.mail Session Store]
-           [javax.mail.search FlagTerm]))
+           [javax.mail Session Store]))
 
 (defn- store
   "An abstract class that models a message store and its access protocol,
@@ -24,13 +23,13 @@
   [^com.sun.mail.imap.IMAPStore s]
   (.close s))
 
-(defn- get-default-folder
+(defn get-default-folder
   ^{:doc "Returns a Folder object that represents the 'root' of the default
           namespace presented to the user by the Store."}
   [^com.sun.mail.imap.IMAPStore s]
   (.getDefaultFolder s))
 
-(defn- get-folder
+(defn get-folder
   "Return the Folder object corresponding to the given name."
   [^com.sun.mail.imap.IMAPStore s name]
   (.getFolder s name))

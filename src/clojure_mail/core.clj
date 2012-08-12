@@ -1,17 +1,12 @@
 (ns clojure-mail.core
-  (use [clojure-mail.store])
-  (:import [java.util Properties]
-           [javax.mail Session Store Folder Message Flags]
+  (use [clojure-mail store message folder])
+  (:import [javax.mail Folder Message Flags]
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
 
 ;; Focus will be more on the reading and parsing of emails.
 ;; Very rough first draft ideas not suitable for production
 ;; Sending email is more easily handled by other libs
-
-;; IMAP client interface
-
-;; TODO Refactor everything
 
 (def settings (ref {:email "" :password ""}))
 
@@ -52,13 +47,6 @@
         folder (doto inbox (.open Folder/READ_ONLY))]
     (.getMessages folder)))
 
-(defn message-headers
-  "Returns all the headers from a message"
-  [^com.sun.mail.imap.IMAPMessage msg]
-  (let [headers (.getAllHeaders msg)
-        results (enumeration-seq headers)]
-    (map #(vector (.getName %) (.getValue %)) results)))
-
 (defn folders
   "Returns a seq of all IMAP folders inlcuding sub folders"
   ([s] (folders s (.getDefaultFolder s)))
@@ -82,14 +70,6 @@
   [^javax.mail.internet.MimeMultipart msg]
   (.getContentType msg))
 
-;; There are a ton of these methods that need adding
-;; Split into Mime namespace and do the same for other classes here when doing refactor
-
-(defn get-msg-size
-  "Returns message size in bytes"
-  [msg]
-  (.getSize msg))
-
 (defn is-mime-type?
   [msg type]
   (.isMimeType msg type))
@@ -99,13 +79,6 @@
   [store folder]
   (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
-
-(def ^:dynamic current-folder)
-
-(defmacro with-folder [folder store & body]
-  `(let [fd# (doto (.getFolder ~store ~folder) (.open Folder/READ_ONLY))]
-     (binding [current-folder fd#]
-       (do ~@body))))
 
 (defn get-body-text
   "Determine the function to call to get the body text of a message"
@@ -135,7 +108,11 @@
   (doseq [[uid msg] message]
     (println 
       (format "%s - %s" uid (clojure.core/bean msg)))))
-  
+
+(defn dump-2 [msgs]
+  (doseq [[uid msg] msgs]
+    (prn msg)))
+
 (defn dump [msgs]
   (doseq [[uid msg] msgs]
     (.writeTo msg (java.io.FileOutputStream. (str uid)))))
