@@ -5,16 +5,22 @@
            [javax.mail.search FlagTerm]))
 
 (comment
-
   ;; A sample session
+  
   ;; First we make a store connection
   (def store (mail-store gmail "user@gmail.com" "password"))
   ;; We can verify the connection
   (connected? store) 
-
   ;; Lets grab some messages from the inbox
-
   (def messages (take 10 (messages store "INBOX")))
+
+  ;; We can use 1 message at a time (might be a good call as there is a ton of data in each message)
+
+  (read-message (second (first (messages))))
+  ;; This is crushing for memory so next job is to speed this up but anyway...
+  ;; Now we have 10 messages lets download the data on all 10 messages
+  
+  (map #(read-message %) (map second messages))
 
 )
 

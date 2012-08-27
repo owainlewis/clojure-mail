@@ -1,7 +1,9 @@
 (ns clojure-mail.message
   (import [javax.mail.internet MimeMultipart InternetAddress]))
 
-(defn mime-type
+;; Private functions
+
+(defn- mime-type
   "Determine the function to call to get the body text of a message"
   [msg type]
   (condp = type
@@ -10,33 +12,33 @@
     "text/plain" :plain
     (str "unexpected type, \"" type \")))
 
-(defn from [m]
+(defn- from [m]
   (.getAddress
   (.getFrom m)))
 
-(defn subject [m]
+(defn- subject [m]
   (.getSubject m))
 
-(defn sender [m]
+(defn- sender [m]
   (.getSender m))
 
-(defn content-type [m]
+(defn- content-type [m]
   (let [type (.getContentType m)]
     type))
 
-(defn in-reply-to [m]
+(defn- in-reply-to [m]
   (.getInReplyTo m))
 
-(defn message-id [m]
+(defn- message-id [m]
   (.getMessageID m))
 
-(defn encoding [m]
+(defn- encoding [m]
   (.getEncoding m))
 
-(defn get-content [m]
+(defn- get-content [m]
   (.getContent m))
 
-(defn message-headers
+(defn- message-headers
   "Returns all the headers from a message"
   [^com.sun.mail.imap.IMAPMessage msg]
   (let [headers (.getAllHeaders msg)
@@ -44,30 +46,32 @@
     (into {}
       (map #(vector (.getName %) (.getValue %)) results))))
 
-(defn multipart? [m]
+(defn- multipart? [m]
   ^{:doc "Returns true if a message is a multipart email"}
   (.startsWith (content-type m) "multipart"))
 
-(defn read-multi [mime-multi-part]
+(defn- read-multi [mime-multi-part]
   (let [count (.getCount mime-multi-part)]
     (for [part (map #(.getBodyPart mime-multi-part %) (range count))]
       (if (multipart? part)
         (.getContent part)
         part))))
 
-(defn message-parts
+(defn- message-parts
   [^javax.mail.internet.MimeMultipart msg]
   (when (multipart? msg)
     (read-multi (get-content msg))))
 
-(defn message-body [^com.sun.mail.imap.IMAPMessage msg]
+(defn- message-body [^com.sun.mail.imap.IMAPMessage msg]
   "Read all the body content from a message"
   [msg]
   (let [parts (message-parts msg)]
     (into []
     (map #(hash-map (.getContentType %) (.getContent %)) parts))))
 
-(defn message-map [msg]
+;; Public API for working with messages
+
+(defn read-message [msg]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
