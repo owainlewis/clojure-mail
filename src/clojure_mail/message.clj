@@ -1,5 +1,5 @@
 (ns clojure-mail.message
-  (import [javax.mail.internet MimeMultipart]))
+  (import [javax.mail.internet MimeMultipart InternetAddress]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
@@ -11,7 +11,8 @@
     (str "unexpected type, \"" type \")))
 
 (defn from [m]
-  (.getFrom m))
+  (.getAddress
+  (.getFrom m)))
 
 (defn subject [m]
   (.getSubject m))
@@ -64,5 +65,10 @@
   (let [parts (message-parts msg)]
     (map #(.getContent %) parts)))
 
-(defn dump-message [msg]
-  ())
+(defn message-map [msg]
+  "Returns a workable map of the message content"
+  { :from (sender msg)
+    :subject (subject msg)
+    :sender (sender msg)
+    :multipart? (multipart? msg)
+    :content-type (content-type msg) })

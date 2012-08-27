@@ -4,6 +4,20 @@
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
 
+(comment
+
+  ;; A sample session
+  ;; First we make a store connection
+  (def store (mail-store gmail "user@gmail.com" "password"))
+  ;; We can verify the connection
+  (connected? store) 
+
+  ;; Lets grab some messages from the inbox
+
+  (def messages (take 10 (messages store "INBOX")))
+
+)
+
 ;; Focus will be more on the reading and parsing of emails.
 ;; Very rough first draft ideas not suitable for production
 ;; Sending email is more easily handled by other libs
