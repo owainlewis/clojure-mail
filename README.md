@@ -61,6 +61,17 @@ Get 5 most recent messages from the spam folder
 
 ```
 
+PS!!!
+
+Don't do stuff like this. It will bring Emacs to a crashing halt. (having said that it did work but took about 2 minutes to sort the data)
+
+```clojure
+(def new-messages (take 10 (reverse (messages store "INBOX"))))
+```
+
+I'll look into sorting by newer messages first or chunking or something to reduce the memory overhead. You can search for individual GUID's if you know them. 
+
+
 FIXME
 
 ## License
