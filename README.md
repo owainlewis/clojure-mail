@@ -61,6 +61,15 @@ Get 5 most recent messages from the spam folder
 
 ```
 
+## For the brave!!!
+
+Dump your entire Gmail inbox to disk 
+
+```clojure
+(def store (mail-store :gmail "user@gmail.com" "password"))
+(dump (messages store "INBOX"))
+```
+
 PS!!!
 
 Don't do stuff like this. It will bring Emacs to a crashing halt. (having said that it did work but took about 2 minutes to sort the data)

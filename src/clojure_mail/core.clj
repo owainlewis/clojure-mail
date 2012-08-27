@@ -119,6 +119,8 @@
     (println 
       (format "%s - %s" uid (clojure.core/bean msg)))))
 
-(defn dump [msgs]
+(defn dump
+  "Handy function that dumps out a batch of emails to disk"
+  [msgs]
   (doseq [[uid msg] msgs]
     (.writeTo msg (java.io.FileOutputStream. (format "/usr/local/messages/%s" (str uid))))))
