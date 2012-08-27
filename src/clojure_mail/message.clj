@@ -41,7 +41,8 @@
   [^com.sun.mail.imap.IMAPMessage msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
-    (map #(vector (.getName %) (.getValue %)) results)))
+    (into {}
+      (map #(vector (.getName %) (.getValue %)) results))))
 
 (defn multipart? [m]
   ^{:doc "Returns true if a message is a multipart email"}
@@ -71,4 +72,4 @@
     :subject (subject msg)
     :sender (sender msg)
     :multipart? (multipart? msg)
-    :content-type (content-type msg) })
+   :content-type (content-type msg) })
