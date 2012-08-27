@@ -61,9 +61,9 @@ Get 5 most recent messages from the spam folder
 
 ```
 
-## For the brave!!!
+## For the brave
 
-Dump your entire Gmail inbox to disk 
+Dump your entire Gmail inbox to disk. This will probably take a long time. (I have around 2500 message in my inbox)
 
 ```clojure
 (def store (mail-store :gmail "user@gmail.com" "password"))
