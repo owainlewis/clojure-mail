@@ -60,16 +60,20 @@
   (when (multipart? msg)
     (read-multi (get-content msg))))
 
-(defn message-body-map
+(defn message-body [^com.sun.mail.imap.IMAPMessage msg]
   "Read all the body content from a message"
   [msg]
   (let [parts (message-parts msg)]
-    (map #(.getContent %) parts)))
+    (into []
+    (map #(hash-map (.getContentType %) (.getContent %)) parts))))
 
 (defn message-map [msg]
-  "Returns a workable map of the message content"
+  "Returns a workable map of the message content.
+   This is the ultimate goal in extracting a message
+   as a clojure map"
   { :from (sender msg)
     :subject (subject msg)
     :sender (sender msg)
     :multipart? (multipart? msg)
-   :content-type (content-type msg) })
+    :content-type (content-type msg)
+    :body (message-body msg) })
