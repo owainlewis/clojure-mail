@@ -14,7 +14,8 @@
 
 (defn auth! [email pass]
   (dosync
-    (ref-set settings {:email email :pass pass})))
+    (ref-set settings
+      {:email email :pass pass})))
 
 (def gmail
   {:protocol "imaps"

@@ -2,7 +2,7 @@
   (refer-clojure :exclude [read])
   (import [javax.mail.internet MimeMultipart InternetAddress]))
 
-;; Private functions
+;; Utilities for parsing email messages
 
 (defn- mime-type
   "Determine the function to call to get the body text of a message"
@@ -68,7 +68,7 @@
   [msg]
   (let [parts (message-parts msg)]
     (into []
-    (map #(hash-map (.getContentType %) (.getContent %)) parts))))
+      (map #(hash-map (.getContentType %) (.getContent %)) parts))))
 
 ;; Public API for working with messages
 
@@ -76,9 +76,9 @@
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
-  { :from (sender msg)
-    :subject (subject msg)
-    :sender (sender msg)
-    :multipart? (multipart? msg)
-    :content-type (content-type msg)
-    :body (message-body msg) })
+  {:from (sender msg)
+   :subject (subject msg)
+   :sender (sender msg)
+   :multipart? (multipart? msg)
+   :content-type (content-type msg)
+   :body (message-body msg) })

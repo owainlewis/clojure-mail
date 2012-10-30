@@ -2,6 +2,8 @@
     (:import [java.util Properties]
              [javax.mail Session Store]))
 
+;; IMAPStore abstractions
+
 (defn- store
   "An abstract class that models a message store and its access protocol,
   for storing and retrieving messages. Subclasses provide actual implementations."

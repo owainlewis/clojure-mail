@@ -37,9 +37,6 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ```
 
-
-FIXME
-
 ## License
 
 Copyright © 2012 FIXME
