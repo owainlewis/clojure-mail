@@ -96,6 +96,12 @@
     (.writeTo msg (java.io.FileOutputStream.
       (format "/usr/local/messages/%s" (str uid))))))
 
+(defn summary
+  "A simple message summary"
+  [messages]
+  (map (fn [m]
+    (msg/from m)) messages))
+  
 ;;; Sending mail
 
 (defn create-message
