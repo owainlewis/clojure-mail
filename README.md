@@ -37,6 +37,40 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ```
 
+## Message parsing
+
+Get all headers from an email 
+
+```
+
+;; Get an email message from our inbox
+
+(def m (first (get-inbox)))
+
+;; Returns all headers as a map
+
+(msg/message-headers m)
+
+;; Get the sender 
+
+(msg/sender m)
+
+;; Get the from address
+
+(msg/from m)
+
+```
+
+## Unread messages
+
+Fetch unread emails
+
+```clojure
+
+(unread-messages "INBOX")
+
+```
+
 ## License
 
 Copyright © 2012 FIXME

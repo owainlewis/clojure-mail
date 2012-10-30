@@ -2,7 +2,7 @@
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
             [clojure-mail.folder :as folder])
-  (:import [javax.mail Folder Message Flags]
+  (:import [javax.mail Folder Message Flags Flags$Flag]
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
 
@@ -82,6 +82,13 @@
 (defn get-spam []
   (read-all (get folder-names :spam)))
 
+(defn unread-messages
+  "Find unread messages"
+  [fd]
+  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))
+        msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+    msgs))
+  
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [msgs]

@@ -13,33 +13,32 @@
     "text/plain" :plain
     (str "unexpected type, \"" type \")))
 
-(defn- from [m]
-  (.getAddress
-  (.getFrom m)))
+(defn from [m]
+  (.getFrom m))
 
-(defn- subject [m]
+(defn subject [m]
   (.getSubject m))
 
-(defn- sender [m]
+(defn sender [m]
   (.getSender m))
 
-(defn- content-type [m]
+(defn content-type [m]
   (let [type (.getContentType m)]
     type))
 
-(defn- in-reply-to [m]
+(defn in-reply-to [m]
   (.getInReplyTo m))
 
-(defn- message-id [m]
+(defn message-id [m]
   (.getMessageID m))
 
-(defn- encoding [m]
+(defn encoding [m]
   (.getEncoding m))
 
-(defn- get-content [m]
+(defn get-content [m]
   (.getContent m))
 
-(defn- message-headers
+(defn message-headers
   "Returns all the headers from a message"
   [^com.sun.mail.imap.IMAPMessage msg]
   (let [headers (.getAllHeaders msg)
@@ -63,7 +62,7 @@
   (when (multipart? msg)
     (read-multi (get-content msg))))
 
-(defn- message-body [^com.sun.mail.imap.IMAPMessage msg]
+(defn message-body [^com.sun.mail.imap.IMAPMessage msg]
   "Read all the body content from a message"
   [msg]
   (let [parts (message-parts msg)]
