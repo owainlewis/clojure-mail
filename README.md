@@ -10,6 +10,30 @@ A clojure library mainly aimed at parsing, downloading and reading email.
 
 ## Usage
 
+```clojure
+
+(comment
+  ;; A sample session
+  
+  ;; First we make a store connection
+  (def store (mail-store gmail "user@gmail.com" "password"))
+  ;; We can verify the connection
+  (connected? store) 
+  ;; Lets grab some messages from the inbox
+  (def messages (take 10 (messages store "INBOX")))
+
+  ;; We can use 1 message at a time 
+
+  (msg/read-message (second (first (messages))))
+
+  ;; This is crushing for memory so next job is to speed this up but anyway...
+  ;; Now we have 10 messages lets download the data on all 10 messages
+  
+  (map #(msg/read-message %) (map second messages))
+)
+
+```
+
 IMAP 
 
 ```clojure
@@ -79,7 +103,6 @@ Don't do stuff like this. It will bring Emacs to a crashing halt. (having said t
 ```
 
 I'll look into sorting by newer messages first or chunking or something to reduce the memory overhead. You can search for individual GUID's if you know them. 
-
 
 FIXME
 

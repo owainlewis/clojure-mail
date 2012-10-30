@@ -1,28 +1,10 @@
 (ns clojure-mail.core
-  (use [clojure-mail store message folder])
+  (:require [clojure-mail.store :as store]
+            [clojure-mail.message :as msg]
+            [clojure-mail.folder :as folder])
   (:import [javax.mail Folder Message Flags]
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
-
-(comment
-  ;; A sample session
-  
-  ;; First we make a store connection
-  (def store (mail-store gmail "user@gmail.com" "password"))
-  ;; We can verify the connection
-  (connected? store) 
-  ;; Lets grab some messages from the inbox
-  (def messages (take 10 (messages store "INBOX")))
-
-  ;; We can use 1 message at a time (might be a good call as there is a ton of data in each message)
-
-  (read-message (second (first (messages))))
-  ;; This is crushing for memory so next job is to speed this up but anyway...
-  ;; Now we have 10 messages lets download the data on all 10 messages
-  
-  (map #(read-message %) (map second messages))
-
-)
 
 ;; Focus will be more on the reading and parsing of emails.
 ;; Very rough first draft ideas not suitable for production
@@ -31,9 +13,6 @@
 (def settings (ref {:email "" :password ""}))
 
 (defonce auth ((juxt :email :password) (deref settings)))
-
-(defprotocol Imap
-  (connect [a b] "connect to IMAP server"))
 
 (def gmail {:protocol "imaps" :server "imap.gmail.com"})
 
@@ -123,4 +102,5 @@
   "Handy function that dumps out a batch of emails to disk"
   [msgs]
   (doseq [[uid msg] msgs]
-    (.writeTo msg (java.io.FileOutputStream. (format "/usr/local/messages/%s" (str uid))))))
+    (.writeTo msg (java.io.FileOutputStream.
+      (format "/usr/local/messages/%s" (str uid))))))
