@@ -42,7 +42,7 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 Get all headers from an email 
 
-```
+```clojure
 
 ;; Get an email message from our inbox
 
