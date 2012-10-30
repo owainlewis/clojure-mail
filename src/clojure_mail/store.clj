@@ -45,3 +45,5 @@
       (store protocol server user pass)
     (catch javax.mail.AuthenticationFailedException e
       (prn "Invalid credentials")))))
+
+(def mail-store make-store)
