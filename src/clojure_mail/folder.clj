@@ -1,4 +1,4 @@
-(ns clojure-mail.folder)
+o(ns clojure-mail.folder)
 
 ;; note that the get folder fn is part of the store namespace
 

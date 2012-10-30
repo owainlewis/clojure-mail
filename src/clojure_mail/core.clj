@@ -34,9 +34,9 @@
   "Used to get a sequence of folder names. Note that this does not recursively
    loop through subfolders like the implementation below"
   [store]
-  (let [default (get-default-folder store)]
+  (let [default (store/get-default-folder store)]
     (map (fn [x] (.getName x))
-         (.list (get-default-folder store)))))
+         (.list (store/get-default-folder store)))))
 
 (defn all-messages
   ^{:doc "Refactored messages fn below. Given a store and folder returns all
@@ -58,10 +58,12 @@
         (folders s %)))
           (.list f))))
 
-(defn messages [s fd & opt]
+(defn messages
+  "Refactored to only pull the messages and ignore uids"
+  [s fd & opt]
   (let [fd (doto (.getFolder s fd) (.open Folder/READ_ONLY))
         msgs (.getMessages fd)]
-    (map #(vector (.getUID fd %) %) msgs)))
+    msgs))
 
 (defn message-content-type
   "Returns the content type of a message object"

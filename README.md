@@ -16,9 +16,9 @@ A clojure library mainly aimed at parsing, downloading and reading email.
   ;; A sample session
   
   ;; First we make a store connection
-  (def store (mail-store gmail "user@gmail.com" "password"))
+  (def store (store/mail-store gmail "user@gmail.com" "password"))
   ;; We can verify the connection
-  (connected? store) 
+  (store/connected? store) 
   ;; Lets grab some messages from the inbox
   (def messages (take 10 (messages store "INBOX")))
 
