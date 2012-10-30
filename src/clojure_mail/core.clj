@@ -10,23 +10,29 @@
 ;; Very rough first draft ideas not suitable for production
 ;; Sending email is more easily handled by other libs
 
-(def settings (ref {:email "" :password ""}))
+(def settings (ref {}))
 
-(defonce auth ((juxt :email :password) (deref settings)))
+(defn auth! [email pass]
+  (dosync
+    (ref-set settings {:email email :pass pass})))
 
-(def gmail {:protocol "imaps" :server "imap.gmail.com"})
+(def gmail
+  {:protocol "imaps"
+   :server "imap.gmail.com"})
 
-(defonce last-uid (com.sun.mail.imap.IMAPFolder/LASTUID))
+(defn gen-store []
+  (apply store/mail-store
+    (cons gmail
+      ((juxt :email :pass) @settings))))
 
-;; TODO map of gmail folder defaults
-
-(def folders
-  {:sent "[Gmail]/Sent Mail"
+(def folder-names
+  {:inbox "INBOX"
+   :all "[Gmail]/All Mail"
+   :sent "[Gmail]/Sent Mail"
    :spam "[Gmail]/Spam"})
 
-;; End Store
-
 (def sub-folder?
+  "Check if a folder is a sub folder"
   (fn [folder]
     (if (= 0 (bit-and (.getType folder) Folder/HOLDS_FOLDERS))
       false
@@ -64,9 +70,34 @@
   (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
 
+(defn read-all
+  [folder]
+  (all-messages (gen-store) folder))
+
+(defn get-inbox []
+  "Returns all messages from the inbox"
+  (read-all (get folder-names :inbox)))
+
+(defn get-spam []
+  (read-all (get folder-names :spam)))
+
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [msgs]
   (doseq [[uid msg] msgs]
     (.writeTo msg (java.io.FileOutputStream.
       (format "/usr/local/messages/%s" (str uid))))))
+
+;;; Sending mail
+
+(defn create-message
+  "Create an instance of javax.mail.internet.MimeMessage"
+  [from to subject body]
+  (let [msg (javax.mail.internet.MimeMessage. session)]                                             
+    (doto msg
+      (.setFrom (javax.mail.internet.InternetAddress. from))
+      (.addRecipients javax.mail.Message$RecipientType/TO to)
+      (.setSubject subject)
+      (.setText body)
+      (.setHeader "X-Mailer", "msgsend")
+      (.setSentDate (java.util.Date.)))))

@@ -1,4 +1,5 @@
 (ns clojure-mail.message
+  (refer-clojure :exclude [read])
   (import [javax.mail.internet MimeMultipart InternetAddress]))
 
 ;; Private functions
@@ -71,7 +72,7 @@
 
 ;; Public API for working with messages
 
-(defn read-message [msg]
+(defn read [msg]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"

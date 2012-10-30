@@ -34,7 +34,7 @@
   [^com.sun.mail.imap.IMAPStore s name]
   (.getFolder s name))
 
-(defn mail-store
+(defn make-store
   "Create a new mail store"
   [client user pass]
   (let [protocol (get client :protocol)

@@ -1,8 +1,7 @@
-(ns clojure-mail.dsl)
+(ns clojure-mail.dsl
+  (:require [clojure-mail.core :as core]))
 
 ;; A nicer interface for interacting with messages
-
-(def settings {:username "" :password ""})
 
 (defmacro with-auth
   ""
