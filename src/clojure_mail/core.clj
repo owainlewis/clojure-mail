@@ -22,7 +22,7 @@
    :server "imap.gmail.com"})
 
 (defn gen-store []
-  (apply store/mail-store
+  (apply store/make-store
     (cons gmail
       ((juxt :email :pass) @settings))))
 
@@ -102,16 +102,3 @@
   (map (fn [m]
     (msg/from m)) messages))
   
-;;; Sending mail
-
-(defn create-message
-  "Create an instance of javax.mail.internet.MimeMessage"
-  [from to subject body]
-  (let [msg (javax.mail.internet.MimeMessage. session)]                                             
-    (doto msg
-      (.setFrom (javax.mail.internet.InternetAddress. from))
-      (.addRecipients javax.mail.Message$RecipientType/TO to)
-      (.setSubject subject)
-      (.setText body)
-      (.setHeader "X-Mailer", "msgsend")
-      (.setSentDate (java.util.Date.)))))
