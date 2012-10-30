@@ -1,4 +1,4 @@
-o(ns clojure-mail.folder)
+(ns clojure-mail.folder)
 
 ;; note that the get folder fn is part of the store namespace
 
@@ -20,3 +20,11 @@ o(ns clojure-mail.folder)
 
 (defn get-message [f id]
   (.getMessage f id))
+
+(defn get-messages
+  "Gets all messages from folder f"
+  [folder]
+  (.getMessages folder))
+
+(defn search [f ^String query]
+  (.search f query))

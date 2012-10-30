@@ -12,11 +12,11 @@
 
 (defn read-from-folder
   "Returns all messages from a folder"
-  [^String folder-name]
-  )
+  [^String folder-name])
+
+(defn all [folder])
 
 (defn get
   "Get a single message by uid"
-  [message-uid]
-)
+  [message-uid])
   

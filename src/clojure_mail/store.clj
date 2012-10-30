@@ -1,6 +1,6 @@
 (ns clojure-mail.store
     (:import [java.util Properties]
-           [javax.mail Session Store]))
+             [javax.mail Session Store]))
 
 (defn- store
   "An abstract class that models a message store and its access protocol,

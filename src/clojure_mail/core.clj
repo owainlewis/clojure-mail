@@ -20,15 +20,17 @@
 
 ;; TODO map of gmail folder defaults
 
-(def gmail-sent "[Gmail]/Sent Mail")
-
-(def gmail-spam "[Gmail]/Spam")
+(def folders
+  {:sent "[Gmail]/Sent Mail"
+   :spam "[Gmail]/Spam"})
 
 ;; End Store
 
 (def sub-folder?
-  (fn [_]
-  (if (= 0 (bit-and (.getType _) Folder/HOLDS_FOLDERS)) false true)))
+  (fn [folder]
+    (if (= 0 (bit-and (.getType folder) Folder/HOLDS_FOLDERS))
+      false
+      true)))
 
 (defn folder-seq
   "Used to get a sequence of folder names. Note that this does not recursively
@@ -39,9 +41,7 @@
          (.list (store/get-default-folder store)))))
 
 (defn all-messages
-  ^{:doc "Refactored messages fn below. Given a store and folder returns all
-   messages. Be aware that there may be a large volume of mail so consider
-   taking x items rather than the entire contents of the folder"}
+  ^{:doc "Given a store and folder returns all messages."}
   [^com.sun.mail.imap.IMAPStore store folder]
   (let [s (.getDefaultFolder store)
         inbox (.getFolder s folder)
@@ -58,47 +58,11 @@
         (folders s %)))
           (.list f))))
 
-(defn messages
-  "Refactored to only pull the messages and ignore uids"
-  [s fd & opt]
-  (let [fd (doto (.getFolder s fd) (.open Folder/READ_ONLY))
-        msgs (.getMessages fd)]
-    msgs))
-
-(defn message-content-type
-  "Returns the content type of a message object"
-  [^javax.mail.internet.MimeMultipart msg]
-  (.getContentType msg))
-
-(defn is-mime-type?
-  [msg type]
-  (.isMimeType msg type))
-
 (defn message-count
   "Returns the number of messages in a folder"
   [store folder]
   (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
-
-(defn get-msg-parts
-  [^javax.mail.internet.MimeMultipart msg]
-  (let [no-parts (get (clojure.core/bean msg) :count)
-        parts (map #(.getBodyPart msg %) (range no-parts))]
-    parts))
-
-(defn read-msg
-  "Read a single message"
-  ([msg]
-  (let [message (clojure.core/bean msg)
-        from (get message :from)]
-    from)))
-
-(defn print-message
-  "Debugging only. Prints out all UIDs and message instances to console"
-  [message]
-  (doseq [[uid msg] message]
-    (println 
-      (format "%s - %s" uid (clojure.core/bean msg)))))
 
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
