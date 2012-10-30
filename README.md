@@ -1,8 +1,9 @@
 # Clojure-mail
 
-** IN PROGRESS **
 
-[![Build Status](https://secure.travis-ci.org/owainlewis/clojure-mail.png?branch=master)](http://travis-ci.org/owainlewis/clojure-mail)
+```
+[clojure-mail "0.1.0-SNAPSHOT"]
+```
 
 A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers. 
 
