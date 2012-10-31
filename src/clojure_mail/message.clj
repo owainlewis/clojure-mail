@@ -14,13 +14,15 @@
     (str "unexpected type, \"" type \")))
 
 (defn from [m]
-  (.getFrom m))
+  (.toString
+    (.getFrom m)))
 
 (defn subject [m]
   (.getSubject m))
 
 (defn sender [m]
-  (.getSender m))
+  (.toString
+    (.getSender m)))
 
 (defn content-type [m]
   (let [type (.getContentType m)]

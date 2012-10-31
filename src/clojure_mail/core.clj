@@ -1,4 +1,5 @@
 (ns clojure-mail.core
+  (refer-clojure :exclude [read])
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
             [clojure-mail.folder :as folder])
@@ -68,8 +69,11 @@
 (defn message-count
   "Returns the number of messages in a folder"
   [store folder]
-  (let [fd (doto (.getFolder store folder) (.open Folder/READ_ONLY))]
+  (let [fd (doto (.getFolder store folder)
+                 (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
+
+;; Public api
 
 (defn read-all
   [folder]
@@ -77,10 +81,19 @@
 
 (defn get-inbox []
   "Returns all messages from the inbox"
-  (read-all (get folder-names :inbox)))
+  (read-all
+    (get folder-names :inbox)))
 
 (defn get-spam []
-  (read-all (get folder-names :spam)))
+  (read-all
+    (get folder-names :spam)))
+
+(defn read-message
+  "Reads a java mail message instance"
+  [message]
+  (msg/read message))
+
+(defn search [query])
 
 (defn unread-messages
   "Find unread messages"
