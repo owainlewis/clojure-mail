@@ -22,7 +22,22 @@
 
 (defn sender [m]
   (.toString
-    (.getSender m)))
+   (.getSender m)))
+
+;; Dates
+
+(defn date-sent [m]
+  (.toString
+    (.getSentDate m)))
+
+(defn date-recieved [m]
+  (.toString
+    (.getReceivedDate m)))
+
+;; Flags
+
+(defn flags [m]
+  (.getFlags m))
 
 (defn content-type [m]
   (let [type (.getContentType m)]
@@ -80,6 +95,8 @@
   {:from (sender msg)
    :subject (subject msg)
    :sender (sender msg)
+   :date-sent (date-sent msg)
+   :date-recieved (date-recieved msg)
    :multipart? (multipart? msg)
    :content-type (content-type msg)
    :body (message-body msg) })
