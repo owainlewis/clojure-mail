@@ -14,17 +14,54 @@
     (str "unexpected type, \"" type \")))
 
 (defn from [m]
-  (.getFrom m))
+  (.toString
+    (.getFrom m)))
 
 (defn subject [m]
   (.getSubject m))
 
 (defn sender [m]
-  (.getSender m))
+  (.toString
+   (.getSender m)))
+
+;; Dates
+
+(defn date-sent [m]
+  (.toString
+    (.getSentDate m)))
+
+(defn date-recieved [m]
+  (.toString
+    (.getReceivedDate m)))
+
+;; Flags
+
+(defn flags [m]
+  (.getFlags m))
 
 (defn content-type [m]
   (let [type (.getContentType m)]
     type))
+
+(defn has-flag?
+  [message flag]
+  (let [f (flags message)]
+    (boolean
+      (.contains f flag))))
+
+(defn read?
+  "Checks if this message has been read"
+  [message]
+  (has-flag? message "SEEN"))
+
+(defn answered?
+  "Check if the message has an answered flag"
+  [message]
+  (has-flag? message "ANSWERED"))
+
+(defn recent?
+  [message]
+  (has-flag? message "RECENT"))
 
 (defn in-reply-to [m]
   (.getInReplyTo m))
@@ -75,9 +112,15 @@
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
-  {:from (sender msg)
-   :subject (subject msg)
-   :sender (sender msg)
-   :multipart? (multipart? msg)
-   :content-type (content-type msg)
-   :body (message-body msg) })
+  (try 
+    {:from (sender msg)
+     :subject (subject msg)
+     :sender (sender msg)
+     :date-sent (date-sent msg)
+     :date-recieved (date-recieved msg)
+     :multipart? (multipart? msg)
+     :content-type (content-type msg)
+     :body (message-body msg) }
+  (catch Exception e
+    (prn e))))
+
