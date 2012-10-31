@@ -44,4 +44,4 @@
     (try
       (store protocol server user pass)
     (catch javax.mail.AuthenticationFailedException e
-      (prn "Invalid credentials")))))
+      (format "Invalid credentials %s : %s" user pass)))))

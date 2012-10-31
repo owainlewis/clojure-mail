@@ -95,6 +95,14 @@
 
 (defn search [query])
 
+(def flags
+  {:answered "ANSWERED"
+   :deleted "DELETED"})
+   
+(defn user-flags [message]
+  (let [flags (msg/flags message)]
+    (.getUserFlags flags)))
+
 (defn unread-messages
   "Find unread messages"
   [fd]
