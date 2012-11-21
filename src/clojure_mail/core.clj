@@ -110,10 +110,12 @@
         msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
     msgs))
   
+(def m-folder "/Users/owainlewis/Dropbox/Mail/")
+
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
-  [msgs]
-  (doseq [[uid msg] msgs]
+  [dir msgs]
+  (doseq [msg msgs]
     (.writeTo msg (java.io.FileOutputStream.
-      (format "/usr/local/messages/%s" (str uid))))))
+      (format "%s%s" dir (str (msg/message-id msg)))))))
 
