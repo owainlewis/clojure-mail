@@ -1,6 +1,6 @@
 (ns clojure-mail.message
   (refer-clojure :exclude [read])
-  (import [javax.mail.internet MimeMultipart InternetAddress]))
+  (import [javax.mail.internet MimeMessage MimeMultipart InternetAddress]))
 
 ;; Utilities for parsing email messages
 
@@ -96,15 +96,17 @@
 
 (defn- message-parts
   [^javax.mail.internet.MimeMultipart msg]
-  (when (multipart? msg)
+  (if (multipart? msg)
     (read-multi (get-content msg))))
 
 (defn message-body [^com.sun.mail.imap.IMAPMessage msg]
   "Read all the body content from a message"
   [msg]
-  (let [parts (message-parts msg)]
-    (into []
-      (map #(hash-map (.getContentType %) (.getContent %)) parts))))
+  (into []
+    (if (multipart? msg)
+      (let [parts (message-parts msg)]
+        (map #(hash-map (.getContentType %) (.getContent %)) parts))
+      (hash-map (content-type msg) (.getContent msg)))))
 
 ;; Public API for working with messages
 

@@ -106,9 +106,8 @@
 (defn unread-messages
   "Find unread messages"
   [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))
-        msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-    msgs))
+  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
+    (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))))
   
 (def m-folder "/Users/owainlewis/Dropbox/Mail/")
 
