@@ -109,9 +109,15 @@
   (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
     (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))))
   
-(def m-folder "/Users/owainlewis/Dropbox/Mail/")
+(defn mark-all-read
+  [fd]
+  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
+        messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+    (prn (apply str messages))
+    (doall (map #(.getContent %) messages))
+    nil))
 
-(defn dump
+  (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [dir msgs]
   (doseq [msg msgs]
