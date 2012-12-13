@@ -1,5 +1,4 @@
 (ns clojure-mail.core
-  (refer-clojure :exclude [read])
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
             [clojure-mail.folder :as folder])
@@ -91,7 +90,7 @@
 (defn read-message
   "Reads a java mail message instance"
   [message]
-  (msg/read message))
+  (msg/read-message message))
 
 (defn search [query])
 
@@ -113,7 +112,6 @@
   [fd]
   (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
         messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-    (prn (apply str messages))
     (doall (map #(.getContent %) messages))
     nil))
 
