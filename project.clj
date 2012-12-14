@@ -1,6 +1,6 @@
-(defproject clojure-mail "0.1.1-SNAPSHOT"
+(defproject org.clojars.ncantor/clojure-mail "0.1.6-SNAPSHOT"
   :description "Clojure Email Library"
-  :url "http://github.com/owainlewis"
+  :url "https://github.com/forward/clojure-mail"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.4.0"]

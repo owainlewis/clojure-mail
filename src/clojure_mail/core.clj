@@ -1,5 +1,4 @@
 (ns clojure-mail.core
-  (refer-clojure :exclude [read])
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
             [clojure-mail.folder :as folder])
@@ -91,7 +90,7 @@
 (defn read-message
   "Reads a java mail message instance"
   [message]
-  (msg/read message))
+  (msg/read-message message))
 
 (defn search [query])
 
@@ -106,13 +105,21 @@
 (defn unread-messages
   "Find unread messages"
   [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))
-        msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-    msgs))
+  (try
+    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
+      (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false)))
+    (catch IllegalArgumentException e (prn "No unread files"))))
   
-(def m-folder "/Users/owainlewis/Dropbox/Mail/")
+(defn mark-all-read
+  [fd]
+  (try 
+    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
+          messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+        (doall (map #(.getContent %) messages))
+        nil)
+    (catch IllegalArgumentException e (prn "No unread files"))))
 
-(defn dump
+  (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [dir msgs]
   (doseq [msg msgs]
