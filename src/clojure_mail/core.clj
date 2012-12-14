@@ -105,15 +105,19 @@
 (defn unread-messages
   "Find unread messages"
   [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
-    (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))))
+  (try
+    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
+      (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false)))
+    (catch IllegalArgumentException e (prn "No unread files"))))
   
 (defn mark-all-read
   [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
-        messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-    (doall (map #(.getContent %) messages))
-    nil))
+  (try 
+    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
+          messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+        (doall (map #(.getContent %) messages))
+        nil)
+    (catch IllegalArgumentException e (prn "No unread files"))))
 
   (defn dump
   "Handy function that dumps out a batch of emails to disk"
