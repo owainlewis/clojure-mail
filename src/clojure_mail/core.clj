@@ -1,7 +1,8 @@
 (ns clojure-mail.core
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
-            [clojure-mail.folder :as folder])
+            [clojure-mail.folder :as folder]
+            [clojure.string :as s])
   (:import [javax.mail Folder Message Flags Flags$Flag]
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
@@ -22,9 +23,9 @@
    :server "imap.gmail.com"})
 
 (defn gen-store []
-  (apply store/make-store
-    (cons gmail
-      ((juxt :email :pass) @settings))))
+  (let [connection (apply store/make-store (cons gmail ((juxt :email :pass) @settings)))] 
+    (assert (not (string? connection)) connection)
+    connection))
 
 (def folder-names
   {:inbox "INBOX"
@@ -104,20 +105,18 @@
 
 (defn unread-messages
   "Find unread messages"
-  [fd]
-  (try
-    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))]
-      (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false)))
-    (catch IllegalArgumentException e (prn "No unread files"))))
+  [folder-name]
+  (with-open [connection (gen-store)]
+    (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_ONLY))]
+      (doall (map read-message (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))))
   
 (defn mark-all-read
-  [fd]
-  (try 
-    (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
-          messages (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-        (doall (map #(.getContent %) messages))
-        nil)
-    (catch IllegalArgumentException e (prn "No unread files"))))
+  [folder-name]
+  (with-open [connection (gen-store)]
+      (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_WRITE))
+            messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+        (doall (map msg/get-content messages))
+        nil)))
 
   (defn dump
   "Handy function that dumps out a batch of emails to disk"
