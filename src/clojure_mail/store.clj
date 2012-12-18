@@ -22,7 +22,7 @@
   (.isConnected s))
 
 (defn close
-  [^com.sun.mail.imap.IMAPStore s]
+  [s]
   (.close s))
 
 (defn get-default-folder

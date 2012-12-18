@@ -11,21 +11,32 @@
 ;; Very rough first draft ideas not suitable for production
 ;; Sending email is more easily handled by other libs
 
-(def settings (ref {}))
+(def ^:dynamic *settings* (ref {}))
+
+(def ^:dynamic *store* (ref nil))
 
 (defn auth! [email pass]
   (dosync
-    (ref-set settings
+    (ref-set *settings*
       {:email email :pass pass})))
+
+(defmacro with-auth [email password & body]
+  `(binding [*settings* (ref {:email ~email :password ~password})]
+     (do ~@body)))
 
 (def gmail
   {:protocol "imaps"
    :server "imap.gmail.com"})
 
 (defn gen-store []
-  (apply store/make-store
-    (cons gmail
-      ((juxt :email :pass) @settings))))
+  (let [store
+    (apply store/make-store
+      (cons gmail
+        ((juxt :email :pass) @*settings*)))]
+     (if (string? store)
+       (throw (Throwable. "Invalid credentials"))
+        (dosync (ref-set *store*
+            store)))))
 
 (def folder-names
   {:inbox "INBOX"
@@ -70,14 +81,16 @@
   "Returns the number of messages in a folder"
   [store folder]
   (let [fd (doto (.getFolder store folder)
-                 (.open Folder/READ_ONLY))]
+             (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
 
 ;; Public api
 
 (defn read-all
   [folder]
-  (all-messages (gen-store) folder))
+  (if ((complement nil?) @*store*)
+    (all-messages @*store* folder)
+    (throw (Throwable. "No store object exists"))))
 
 (defn get-inbox []
   "Returns all messages from the inbox"
@@ -92,8 +105,6 @@
   "Reads a java mail message instance"
   [message]
   (msg/read message))
-
-(defn search [query])
 
 (def flags
   {:answered "ANSWERED"
@@ -110,8 +121,6 @@
         msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
     msgs))
   
-(def m-folder "/Users/owainlewis/Dropbox/Mail/")
-
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [dir msgs]
