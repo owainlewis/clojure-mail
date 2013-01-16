@@ -115,7 +115,7 @@
   (with-open [connection (gen-store)]
       (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_WRITE))
             messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-        (doall (map msg/get-content messages))
+         (doall (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages))
         nil)))
 
   (defn dump
