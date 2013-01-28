@@ -105,7 +105,7 @@
     (if (multipart? msg)
       (let [parts (message-parts msg)]
         (map #(hash-map (.getContentType %) (.getContent %)) parts))
-      (hash-map (content-type msg) (.getContent msg)))))
+      (list (hash-map (content-type msg) (.getContent msg))))))
 
 ;; Public API for working with messages
 
