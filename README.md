@@ -33,8 +33,7 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ;; Get 5 messages from the spam folder
 
-(map #(msg/read %)
-  (take 5 (get-spam)))
+(map msg/read (take 5 (get-spam)))
 
 ```
 
