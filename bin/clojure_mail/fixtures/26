@@ -1,0 +1,121 @@
+Delivered-To: zaphrauk@gmail.com
+Received: by 10.100.120.16 with SMTP id s16cs98701anc;
+        Wed, 29 Jun 2011 15:21:56 -0700 (PDT)
+Received: by 10.42.171.132 with SMTP id j4mr1393188icz.414.1309386115596;
+        Wed, 29 Jun 2011 15:21:55 -0700 (PDT)
+Return-Path: <bounce-2155775_HTML-732354014-13051672-161174-80@bounce.emailcomm-google.com>
+Received: from mta1.emailcomm-google.com (mta1.emailcomm-google.com [66.231.83.54])
+        by mx.google.com with ESMTP id f4si2391670ibn.107.2011.06.29.15.21.54;
+        Wed, 29 Jun 2011 15:21:55 -0700 (PDT)
+Received-SPF: pass (google.com: domain of bounce-2155775_HTML-732354014-13051672-161174-80@bounce.emailcomm-google.com designates 66.231.83.54 as permitted sender) client-ip=66.231.83.54;
+Authentication-Results: mx.google.com; spf=pass (google.com: domain of bounce-2155775_HTML-732354014-13051672-161174-80@bounce.emailcomm-google.com designates 66.231.83.54 as permitted sender) smtp.mail=bounce-2155775_HTML-732354014-13051672-161174-80@bounce.emailcomm-google.com; dkim=pass (test mode) header.i=adsense-noreply@google.com
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; s=delta; d=google.com;
+ h=From:To:Subject:Date:List-Unsubscribe:MIME-Version:Reply-To:Message-ID:Content-Type; i=adsense-noreply@google.com;
+ bh=csSgSOTD83zm0FYmbmsNfx0CYCY=;
+ b=moKf38SA36Tt8HgUeMIE9VgK15ifqPi2vBX08ytVIFGi/Y+gJOox1kpapKXAIgEz6BU9+nz8R44l
+   m9DyWLoEmbeE28FXoVgnPvD0Xh1oHnYhcRtl2/timyHv10NvThE/BCQoskEcmU/c1s+LrPHXtsIJ
+   7Ae0X+MN1Q96tbgPfjk=
+DomainKey-Signature: a=rsa-sha1; c=nofws; q=dns; s=delta; d=google.com;
+ b=SLgvnfc0Ey+plHObglu9oTkfbWvKTaEGMxBnaFq4L0O0az4O9DlauXZSxqvw9yyRsW1c0TaV8QJG
+   v31Wle7MtUmKCL7WpPTRSOqymqU0Y4n/a8uOQ6OW93kKszK2hbYpae0baT+NoFHb+DP8GiEcaorR
+   uC6F9mYLAUThcISTcGE=;
+Received: by mta1.emailcomm-google.com (PowerMTA(TM) v3.5r15) id h1eio60ie1sj for <zaphrauk@gmail.com>; Wed, 29 Jun 2011 15:57:49 -0600 (envelope-from <bounce-2155775_HTML-732354014-13051672-161174-80@bounce.emailcomm-google.com>)
+From: "Google AdSense" <adsense-noreply@google.com>
+To: <zaphrauk@gmail.com>
+Subject: Your AdSense Payment is on its way!
+Date: Wed, 29 Jun 2011 15:57:48 -0600
+List-Unsubscribe: <mailto:leave-fc7b16717061037a707b28313958-fe32137377670179751574-fe6615737561057b7216-fecb157674650379-ff971c70@leave.comms.doubleclick.com>
+MIME-Version: 1.0
+Reply-To: "Google AdSense" <reply-fe6615737561057b7216-2155775_HTML-732354014-161174-80@emailcomm-google.com>
+x-job: 161174_13051672
+Message-ID: <29ed2a5a-a09d-464e-b1a3-54b0f71e8c15@xtinmta436.xt.local>
+Content-Type: multipart/alternative;
+	boundary="TJJjLy0NYQ1H=_?:"
+
+This is a multi-part message in MIME format.
+
+--TJJjLy0NYQ1H=_?:
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+You've been issued a payment from Google AdSenseYou've been issued a payment from Google AdSense
+Hello,
+
+Please note that we've recently issued a payment to you for your AdSense earnings. Your payment represents the total of your finalized earnings accumulated through the end of last month.
+
+For more information, please
+http://click.comms.doubleclick.com/?qs=df4c613cb504f79e3af5d717278ceb8f1b77b53896c060c2775e41fac4a375d2bc773d52ec006f60 
+log into  your account and visit
+your
+http://click.comms.doubleclick.com/?qs=df4c613cb504f79e8b4798ee7520750e3352c44f19db3aeb664f3b9810b20ddaae9073d5ac74172d 
+Payments page . Depending on your
+form of payment, you may also be able to find a reference number there to track or pick up your
+payment.
+
+Remember, if Electronic Funds Transfer (EFT) is available in your country, we recommend it as a faster and more reliable form of payment. For more information, please visit the following link:
+http://click.comms.doubleclick.com/?qs=df4c613cb504f79e5efdbbd21672093b265c012f07d7482b7fa5f01db2d7e10b4ce4a45f2bd03e3d 
+"How do I sign up for Electronic Funds Transfer?" 
+
+Congratulations! We hope you receive your payment soon.
+
+Sincerely,
+ The Google AdSense Team
+
+(c) 2011 Google
+
+Email Preferences:You have received this mandatory email service 
+announcement to update you about important changes to your Google AdSense 
+account.
+
+Google, Inc. 1600 Amphitheatre Parkway Mountain View, CA 94043 USA
+
+
+
+
+--TJJjLy0NYQ1H=_?:
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
+<head> 
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+	<title>You've been issued a payment from Google AdSense</title> 
+</head> 
+<body> 
+	<div style="color:#111; font-size:12.8px; font-family:Arial, sans-serif; line-height:140%; padding: 0 30px;"> 
+		<div id="head" style="border-bottom: 1px solid #999; overflow: hidden; margin-top: 11px; margin-bottom: 2.4em;"> 
+			<img src="https://www.google.com/images/logos/adsense_logo.gif" alt="Google" style="float:left; margin-bottom:1px;" /> 
+			<h1 style="color:#009900; font-size:145%; clear:left;">You've been issued a payment from Google AdSense</h1> 
+		</div> 
+		<p style="margin-bottom:1em;">Hello,</p>
+		<p style="margin-bottom:1em;">Please note that we've recently issued a payment to you for your AdSense earnings. Your payment represents the total of your finalized earnings accumulated through the end of last month.</p> 
+		<p style="margin-bottom:1em;">For more information, please <a href="http://click.comms.doubleclick.com/?qs=df4c613cb504f79e3af5d717278ceb8f1b77b53896c060c2775e41fac4a375d2bc773d52ec006f60">log into</a> your account and visit
+your <a href="http://click.comms.doubleclick.com/?qs=df4c613cb504f79e8b4798ee7520750e3352c44f19db3aeb664f3b9810b20ddaae9073d5ac74172d">Payments page</a>. Depending on your
+form of payment, you may also be able to find a reference number there to track or pick up your
+payment.</p> 
+			<p style="margin-bottom:1em;">Remember, if Electronic Funds Transfer (EFT) is available in your country, we recommend it as a faster and more reliable form of payment. For more information, please visit the following link: <a href="http://click.comms.doubleclick.com/?qs=df4c613cb504f79e5efdbbd21672093b265c012f07d7482b7fa5f01db2d7e10b4ce4a45f2bd03e3d">"How do I sign up for Electronic Funds Transfer?"</a>  </p>
+
+			<p style="margin-bottom:1em;">Congratulations! We hope you receive your payment soon.</p>
+		
+		<p style="margin-bottom:1em;">Sincerely, <br> The Google AdSense Team</p> 
+		<div id="foot" style="font-family:Arial, sans-serif; margin-top:3em; color:#999; border-top:1px solid #999; font-size:11px; line-height:120%;"> 
+			<p style="margin-bottom:1em;">&copy; 2011 Google</p> 
+			<p style="margin-bottom:1em;">Email Preferences:  You have received this mandatory email service 
+announcement to update you about important changes to your Google AdSense 
+account.
+</p>
+			<p style="margin-bottom:1em;">Google, Inc. 1600 Amphitheatre Parkway Mountain View, CA 94043 USA</p> 
+		</div> 
+	</div> 
+</body>
+<img src="http://click.comms.doubleclick.com/open.aspx?ffcb10-fe6615737561057b7216-fded12797762057c7d1c707c-fecb157674650379-fe8f16717061037a70-fe32137377670179751574-ff971c70" width="1" height="1"> 
+</html>
+
+
+--TJJjLy0NYQ1H=_?:--
+
