@@ -29,11 +29,12 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ;; And read the first message in our inbox
 
-(msg/read (first (get-inbox)))
+(msg/read-message (first (get-inbox)))
 
 ;; Get 5 messages from the spam folder
 
-(map msg/read (take 5 (get-spam)))
+(map #(msg/read-message %)
+  (take 5 (get-spam)))
 
 ```
 

@@ -1,8 +1,8 @@
 (ns clojure-mail.core
-  (refer-clojure :exclude [read])
   (:require [clojure-mail.store :as store]
             [clojure-mail.message :as msg]
-            [clojure-mail.folder :as folder])
+            [clojure-mail.folder :as folder]
+            [clojure.string :as s])
   (:import [javax.mail Folder Message Flags Flags$Flag]
            [javax.mail.internet InternetAddress]
            [javax.mail.search FlagTerm]))
@@ -11,32 +11,21 @@
 ;; Very rough first draft ideas not suitable for production
 ;; Sending email is more easily handled by other libs
 
-(def ^:dynamic *settings* (ref {}))
-
-(def ^:dynamic *store* (ref nil))
+(def settings (ref {}))
 
 (defn auth! [email pass]
   (dosync
-    (ref-set *settings*
+    (ref-set settings
       {:email email :pass pass})))
-
-(defmacro with-auth [email password & body]
-  `(binding [*settings* (ref {:email ~email :password ~password})]
-     (do ~@body)))
 
 (def gmail
   {:protocol "imaps"
    :server "imap.gmail.com"})
 
 (defn gen-store []
-  (let [store
-    (apply store/make-store
-      (cons gmail
-        ((juxt :email :pass) @*settings*)))]
-     (if (string? store)
-       (throw (Throwable. "Invalid credentials"))
-        (dosync (ref-set *store*
-            store)))))
+  (let [connection (apply store/make-store (cons gmail ((juxt :email :pass) @settings)))] 
+    (assert (not (string? connection)) connection)
+    connection))
 
 (def folder-names
   {:inbox "INBOX"
@@ -81,16 +70,14 @@
   "Returns the number of messages in a folder"
   [store folder]
   (let [fd (doto (.getFolder store folder)
-             (.open Folder/READ_ONLY))]
+                 (.open Folder/READ_ONLY))]
     (.getMessageCount fd)))
 
 ;; Public api
 
 (defn read-all
   [folder]
-  (if ((complement nil?) @*store*)
-    (all-messages @*store* folder)
-    (throw (Throwable. "No store object exists"))))
+  (all-messages (gen-store) folder))
 
 (defn get-inbox []
   "Returns all messages from the inbox"
@@ -104,7 +91,9 @@
 (defn read-message
   "Reads a java mail message instance"
   [message]
-  (msg/read message))
+  (msg/read-message message))
+
+(defn search [query])
 
 (def flags
   {:answered "ANSWERED"
@@ -116,12 +105,20 @@
 
 (defn unread-messages
   "Find unread messages"
-  [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))
-        msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-    msgs))
+  [folder-name]
+  (with-open [connection (gen-store)]
+    (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_ONLY))]
+      (doall (map read-message (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))))
   
-(defn dump
+(defn mark-all-read
+  [folder-name]
+  (with-open [connection (gen-store)]
+      (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_WRITE))
+            messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+         (doall (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages))
+        nil)))
+
+  (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [dir msgs]
   (doseq [msg msgs]
