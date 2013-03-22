@@ -104,7 +104,7 @@
 (defn read-message
   "Reads a java mail message instance"
   [message]
-  (msg/read message))
+  (msg/read-msg message))
 
 (def flags
   {:answered "ANSWERED"
@@ -117,7 +117,7 @@
 (defn unread-messages
   "Find unread messages"
   [fd]
-  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_ONLY))
+  (let [fd (doto (.getFolder (gen-store) fd) (.open Folder/READ_WRITE))
         msgs (.search fd (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
     msgs))
   
