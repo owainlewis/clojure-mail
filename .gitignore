@@ -9,3 +9,9 @@ pom.xml
 .lein-failures
 .lein-plugins
 .DS_Store
+bin
+.project
+.classpath
+.orig
+/.buildpath
+/.settings

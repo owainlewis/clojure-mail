@@ -1,6 +1,7 @@
 (ns clojure-mail.message
   (refer-clojure :exclude [read])
-  (import [javax.mail.internet MimeMultipart InternetAddress]))
+  
+  (:import [javax.mail.internet MimeMultipart InternetAddress]))
 
 ;; Utilities for parsing email messages
 
@@ -75,6 +76,9 @@
 (defn get-content [m]
   (.getContent m))
 
+;(defn mark-as-read [m]
+;  (.setFlag m Flag/SEEN true ))
+
 (defn message-headers
   "Returns all the headers from a message"
   [^com.sun.mail.imap.IMAPMessage msg]
@@ -91,24 +95,24 @@
   (let [count (.getCount mime-multi-part)]
     (for [part (map #(.getBodyPart mime-multi-part %) (range count))]
       (if (multipart? part)
-        (.getContent part)
+        (read-multi (.getContent part))
         part))))
 
 (defn- message-parts
-  [^javax.mail.internet.MimeMultipart msg]
+  [msg]
   (when (multipart? msg)
-    (read-multi (get-content msg))))
+    (flatten (read-multi (get-content msg)))))
 
 (defn message-body [^com.sun.mail.imap.IMAPMessage msg]
   "Read all the body content from a message"
   [msg]
   (let [parts (message-parts msg)]
     (into []
-      (map #(hash-map (.getContentType %) (.getContent %)) parts))))
+      (map (fn [part] {:content-type (.getContentType part) :content (.getContent part)}) parts))))
 
 ;; Public API for working with messages
 
-(defn read [msg]
+(defn read-msg [msg]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
