@@ -27,7 +27,7 @@ There are currently some issues with handling large volumes of mail (i.e hundred
  :date-recieved "Thu Apr 04 20:33:44 BST 2013",
  :multipart? false,
  :content-type "TEXT/PLAIN; charset=utf-8",
- :body [{"TEXT/PLAIN; charset=utf-8" "Dear Customer,\r\n\r\n\r\nYour ticket number XXX.\r\nWe will respond to your request as soon as possible.\r\n\r\nOur office opening hours are Monday to Friday from 8AM to 12AM and 1PM to 5PM CET.\r\n\r\nKind regards,\r\nEuroDNS Customer Services\r\nhttp://www.eurodns.com\r\n\r\nN.B.\r\nPlease keep the above ticket number in the subject line for all further correspondence in order to speed up the ticket turnaround.\r\n"}]}
+ :body [{"TEXT/PLAIN; charset=utf-8" "Dear Customer...}]}
 
 ```
 
