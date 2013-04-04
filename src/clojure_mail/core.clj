@@ -20,15 +20,17 @@
 
 (def gmail
   {:protocol "imaps"
-   :port 993
    :server "imap.gmail.com"})
 
-(defn gen-store []
-  (let [connection (apply store/make-store
-                     (cons gmail
-                       ((juxt :email :pass) @settings)))]
+(defn gen-store
+  ([]
+    (let [connection (apply store/make-store
+                       (cons gmail
+                         ((juxt :email :pass) @settings)))]
     (assert (not (string? connection)) connection)
       connection))
+  ([user pass]
+    (apply store/make-store [gmail user pass])))
 
 (def folder-names
   {:inbox "INBOX"
@@ -95,8 +97,6 @@
   "Reads a java mail message instance"
   [message]
   (msg/read-message message))
-
-(defn search [query])
 
 (def flags
   {:answered "ANSWERED"
