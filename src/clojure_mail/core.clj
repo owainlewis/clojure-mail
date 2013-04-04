@@ -24,9 +24,7 @@
 
 (defn gen-store
   ([]
-    (let [connection (apply store/make-store
-                       (cons gmail
-                         ((juxt :email :pass) @settings)))]
+    (let [connection (apply store/make-store (cons gmail ((juxt :email :pass) @settings)))]
     (assert (not (string? connection)) connection)
       connection))
   ([user pass]
