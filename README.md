@@ -39,6 +39,38 @@ Or read a message from the spam folder
 (def spam (take 5 (get-spam)))
 ```
 
+Count the number of messages in our inbox
+
+```clojure
+(count (all-messages store "INBOX"))
+```
+
+It's important to note that mail is ordered the wrong way. If you want to get your most recent mail you'll need
+to do something like this
+
+```clojure
+(def recent
+  (->> (all-messages store "INBOX")
+        reverse
+        (take 5)))
+```
+
+There's a helper function to get the lastest n messages from your inbox
+
+```clojure
+(def messages (get-recent store 10))
+
+;; Read the subjects
+(map (comp :subject msg/read-message) m)
+
+```
+
+Want a summary of the last 5 messages in your inbox?
+
+```clojure
+(message-list store 5)
+```
+
 ## Message parsing
 
 Get all headers from an email

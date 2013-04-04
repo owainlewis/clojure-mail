@@ -113,7 +113,7 @@
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
-  (try 
+  (try
     {:from (sender msg)
      :subject (subject msg)
      :sender (sender msg)

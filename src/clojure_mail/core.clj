@@ -61,6 +61,19 @@
         folder (doto inbox (.open Folder/READ_ONLY))]
     (.getMessages folder)))
 
+(defn recent-mail [store & params]
+  "Just show the last 10 messages from our inbox"
+  (let [limit (or (first params) 10)]
+    (->> (all-messages store "INBOX")
+          reverse
+          (take 5))))
+
+(defn message-list
+  "A quick summary of your recent emails"
+  [store limit]
+  (map (comp :subject msg/read-message)
+    (recent-mail store limit)))
+
 (defn folders
   "Returns a seq of all IMAP folders inlcuding sub folders"
   ([store] (folders store (.getDefaultFolder store)))
