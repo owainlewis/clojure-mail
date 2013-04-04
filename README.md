@@ -13,6 +13,14 @@ There are currently some issues with handling large volumes of mail (i.e hundred
 
 ## Quick example
 
+Require clojure-mail
+
+```clojure
+(:use [clojure-mail.core])
+```
+
+Quick example of how to read a message from your inbox
+
 ```clojure
 (def my-inbox (inbox "user@gmail.com" "password"))
 
