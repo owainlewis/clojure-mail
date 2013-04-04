@@ -5,9 +5,11 @@
 [clojure-mail "0.1.0-SNAPSHOT"]
 ```
 
-A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers. 
+A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers.
 
 Possible uses for this library include machine learning corpus generation and command line mail clients.
+
+There are currently some issues with handling large volumes of mail (i.e hundreds or thousands of messages)
 
 ## Examples
 
@@ -17,12 +19,21 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ;; Create your auth creds
 
-(auth! "user@gmail.com" "password")
+(auth! "USER@GMAIL.COM" "PASSWORD")
 
 ;; Create a mail store instance. This is your gateway to your gmail account.
 
 (def store (gen-store))
+```
 
+or alternatively just pass your details straight into the mail store
+
+```clojure
+(def store (gen-store "USER@GMAIL.COM" "PASSWORD"))
+```
+
+
+```clojure
 ;; Now we can get 5 messages from our inbox
 
 (def my-messages (take 5 (get-inbox)))
