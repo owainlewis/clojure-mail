@@ -14,9 +14,9 @@ There are currently some issues with handling large volumes of mail (i.e hundred
 ## Quick example
 
 ```clojure
-(def store (gen-store "user@gmail.com" "password"))
+(def my-inbox (inbox "user@gmail.com" "password"))
 
-(msg/read-message (first (recent-first store "INBOX")))
+(read-message (first my-inbox))
 
 ;; Returns the first message from my gmail account
 
@@ -28,7 +28,6 @@ There are currently some issues with handling large volumes of mail (i.e hundred
  :multipart? false,
  :content-type "TEXT/PLAIN; charset=utf-8",
  :body [{"TEXT/PLAIN; charset=utf-8" "Dear Customer...}]}
-
 ```
 
 ## Examples

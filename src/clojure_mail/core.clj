@@ -105,6 +105,10 @@
 (defn recent-first [store folder]
   (->> (all-messages store folder) reverse))
 
+(defn inbox [user pass]
+  (let [store (gen-store user pass)]
+    (recent-first store "INBOX")))
+
 (defn get-spam []
   (read-all
     (get folder-names :spam)))
