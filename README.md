@@ -40,7 +40,7 @@ In this example we'll log into a Gmail account and read messages from the inbox 
 
 ## Message parsing
 
-Get all headers from an email 
+Get all headers from an email
 
 ```clojure
 
@@ -52,7 +52,7 @@ Get all headers from an email
 
 (msg/message-headers m)
 
-;; Get the sender 
+;; Get the sender
 
 (msg/sender m)
 
@@ -60,6 +60,19 @@ Get all headers from an email
 
 (msg/from m)
 
+```
+
+## Listing Mail Folders
+
+You can return a list of mail folders easily
+
+```clojure
+(folders store)
+
+;; (("INBOX") ("Important Info") ("Zero" ("Group") ("Newsletter")
+    ("Notification") ("Registration")) ("[Gmail]" ("All Mail")
+    ("Drafts") ("Important") ("Sent Mail") ("Spam") ("Starred")
+    ("Trash")) ("[Mailbox]" ("Later") ("To Buy") ("To Read") ("To Watch")))
 ```
 
 ## Unread messages

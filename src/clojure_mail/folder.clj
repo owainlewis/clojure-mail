@@ -26,5 +26,5 @@
   [folder]
   (.getMessages folder))
 
-(defn search [f ^String query]
+(defn search [f query]
   (.search f query))

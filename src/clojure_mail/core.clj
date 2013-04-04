@@ -20,12 +20,15 @@
 
 (def gmail
   {:protocol "imaps"
+   :port 993
    :server "imap.gmail.com"})
 
 (defn gen-store []
-  (let [connection (apply store/make-store (cons gmail ((juxt :email :pass) @settings)))] 
+  (let [connection (apply store/make-store
+                     (cons gmail
+                       ((juxt :email :pass) @settings)))]
     (assert (not (string? connection)) connection)
-    connection))
+      connection))
 
 (def folder-names
   {:inbox "INBOX"
@@ -58,12 +61,12 @@
 
 (defn folders
   "Returns a seq of all IMAP folders inlcuding sub folders"
-  ([s] (folders s (.getDefaultFolder s)))
-  ([s f]
+  ([store] (folders store (.getDefaultFolder store)))
+  ([store f]
   (map
     #(cons (.getName %)
       (if (sub-folder? %)
-        (folders s %)))
+        (folders store %)))
           (.list f))))
 
 (defn message-count
@@ -98,7 +101,7 @@
 (def flags
   {:answered "ANSWERED"
    :deleted "DELETED"})
-   
+
 (defn user-flags [message]
   (let [flags (msg/flags message)]
     (.getUserFlags flags)))
@@ -109,7 +112,7 @@
   (with-open [connection (gen-store)]
     (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_ONLY))]
       (doall (map read-message (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))))
-  
+
 (defn mark-all-read
   [folder-name]
   (with-open [connection (gen-store)]
