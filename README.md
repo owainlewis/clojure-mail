@@ -15,38 +15,28 @@ There are currently some issues with handling large volumes of mail (i.e hundred
 
 In this example we'll log into a Gmail account and read messages from the inbox and spam folders.
 
-```clojure
-
-;; Create your auth creds
-
-(auth! "USER@GMAIL.COM" "PASSWORD")
-
-;; Create a mail store instance. This is your gateway to your gmail account.
-
-(def store (gen-store))
-```
-
-or alternatively just pass your details straight into the mail store
+The first thing we need to do is create a mail store that acts as a gateway to your gmail account.
 
 ```clojure
 (def store (gen-store "USER@GMAIL.COM" "PASSWORD"))
 ```
 
+Now we can get 5 messages from our inbox
 
 ```clojure
-;; Now we can get 5 messages from our inbox
-
 (def my-messages (take 5 (get-inbox)))
+```
 
-;; And read the first message in our inbox
+And read the first message in our inbox
 
+```clojure
 (msg/read-message (first (get-inbox)))
+```
 
-;; Get 5 messages from the spam folder
+Or read a message from the spam folder
 
-(map #(msg/read-message %)
-  (take 5 (get-spam)))
-
+```clojure
+(def spam (take 5 (get-spam)))
 ```
 
 ## Message parsing
