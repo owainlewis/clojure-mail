@@ -11,6 +11,26 @@ Possible uses for this library include machine learning corpus generation and co
 
 There are currently some issues with handling large volumes of mail (i.e hundreds or thousands of messages)
 
+## Quick example
+
+```clojure
+(def store (gen-store "user@gmail.com" "password"))
+
+(msg/read-message (first (recent-first store "INBOX")))
+
+;; Returns the first message from my gmail account
+
+{:from "EuroDNS Customer Services <support@eurodns.com>",
+ :subject "Re: Domain",
+ :sender "EuroDNS Customer Services <support@eurodns.com>",
+ :date-sent "Thu Apr 04 20:33:42 BST 2013",
+ :date-recieved "Thu Apr 04 20:33:44 BST 2013",
+ :multipart? false,
+ :content-type "TEXT/PLAIN; charset=utf-8",
+ :body [{"TEXT/PLAIN; charset=utf-8" "Dear Customer,\r\n\r\n\r\nYour ticket number XXX.\r\nWe will respond to your request as soon as possible.\r\n\r\nOur office opening hours are Monday to Friday from 8AM to 12AM and 1PM to 5PM CET.\r\n\r\nKind regards,\r\nEuroDNS Customer Services\r\nhttp://www.eurodns.com\r\n\r\nN.B.\r\nPlease keep the above ticket number in the subject line for all further correspondence in order to speed up the ticket turnaround.\r\n"}]}
+
+```
+
 ## Examples
 
 In this example we'll log into a Gmail account and read messages from the inbox and spam folders.
@@ -65,7 +85,7 @@ There's a helper function to get the lastest n messages from your inbox
 
 ```
 
-Want a summary of the last 5 messages in your inbox?
+Want a summary of the last 5 messages in your inbox?yg
 
 ```clojure
 (message-list store 5)

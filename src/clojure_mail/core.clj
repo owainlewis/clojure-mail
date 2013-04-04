@@ -94,13 +94,16 @@
 ;; Public api
 
 (defn read-all
-  [folder]
-  (all-messages (gen-store) folder))
+  ([folder] (all-messages (gen-store) folder))
+  ([folder store] (all-messages store folder)))
 
 (defn get-inbox []
   "Returns all messages from the inbox"
   (read-all
     (get folder-names :inbox)))
+
+(defn recent-first [store folder]
+  (->> (all-messages store folder) reverse))
 
 (defn get-spam []
   (read-all
