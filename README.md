@@ -70,9 +70,9 @@ You can return a list of mail folders easily
 (folders store)
 
 ;; (("INBOX") ("Important Info") ("Zero" ("Group") ("Newsletter")
-    ("Notification") ("Registration")) ("[Gmail]" ("All Mail")
-    ("Drafts") ("Important") ("Sent Mail") ("Spam") ("Starred")
-    ("Trash")) ("[Mailbox]" ("Later") ("To Buy") ("To Read") ("To Watch")))
+;;  ("Notification") ("Registration")) ("[Gmail]" ("All Mail")
+;;  ("Drafts") ("Important") ("Sent Mail") ("Spam") ("Starred")
+;;  ("Trash")) ("[Mailbox]" ("Later") ("To Buy") ("To Read") ("To Watch")))
 ```
 
 ## Unread messages
