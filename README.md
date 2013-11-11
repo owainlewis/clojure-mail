@@ -5,7 +5,7 @@
 [clojure-mail "0.1.3-SNAPSHOT"]
 ```
 
-A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers.
+A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers (it works for private domains as well).
 
 Possible uses for this library include machine learning corpus generation and command line mail clients.
 
@@ -28,7 +28,8 @@ Quick example of how to read a message from your inbox
 
 ;; Returns the first message from my gmail account
 
-{:from "EuroDNS Customer Services <support@eurodns.com>",
+{:to ("you+someAlias@gmail.com" "you+anotherAlias@gmail.com" "someone@gmail.com"),
+ :from "EuroDNS Customer Services <support@eurodns.com>",
  :subject "Re: Domain",
  :sender "EuroDNS Customer Services <support@eurodns.com>",
  :date-sent "Thu Apr 04 20:33:42 BST 2013",

@@ -12,6 +12,11 @@
     "text/plain" :plain
     (str "unexpected type, \"" type \")))
 
+(defn to 
+  "Returns a sequence of receivers"
+  [m]
+    (map str (.getRecipients m javax.mail.Message$RecipientType/TO)))
+
 (defn from [m]
   (.toString
     (.getFrom m)))
@@ -114,7 +119,8 @@
    This is the ultimate goal in extracting a message
    as a clojure map"
   (try
-    {:from (sender msg)
+    {:to (to msg)
+     :from (sender msg)
      :subject (subject msg)
      :sender (sender msg)
      :date-sent (date-sent msg)
