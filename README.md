@@ -52,7 +52,7 @@ The first thing we need to do is create a mail store that acts as a gateway to y
 Alternativley some methods make use of authentication settings held in a `ref` to avoid having to pass the mail store around.  The ref can be set like so,
 
 ```clojure
-(mail/auth! "USER@GMAIL.COM" "PASSWORD")
+(auth! "USER@GMAIL.COM" "PASSWORD")
 ```
 
 Now we can get 5 messages from our inbox
