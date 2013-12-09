@@ -23,9 +23,12 @@
    :server "imap.gmail.com"})
 
 (defn gen-store
+  "Generates an email store which allows us access to our inbox"
   ([]
-    (let [connection (apply store/make-store (cons gmail ((juxt :email :pass) @settings)))]
-    (assert (not (string? connection)) connection)
+    (let [connection (apply store/make-store 
+                       (cons gmail 
+                         ((juxt :email :pass) @settings)))]
+    (assert ((complement string?) connection) connection)
       connection))
   ([user pass]
     (apply store/make-store [gmail user pass])))
@@ -39,7 +42,8 @@
 (def sub-folder?
   "Check if a folder is a sub folder"
   (fn [folder]
-    (if (= 0 (bit-and (.getType folder) Folder/HOLDS_FOLDERS))
+    (if (= 0 (bit-and 
+               (.getType folder) Folder/HOLDS_FOLDERS))
       false
       true)))
 
@@ -48,8 +52,9 @@
    loop through subfolders like the implementation below"
   [store]
   (let [default (store/get-default-folder store)]
-    (map (fn [x] (.getName x))
-         (.list (store/get-default-folder store)))))
+    (map (fn [x] 
+           (.getName x))
+             (.list (store/get-default-folder store)))))
 
 (defn all-messages
   ^{:doc "Given a store and folder returns all messages."}
@@ -92,6 +97,8 @@
 ;; Public api
 
 (defn read-all
+  "Reads all messages from a given folder
+   i.e (read-all \"INBOX\""
   ([folder] (all-messages (gen-store) folder))
   ([folder store] (all-messages store folder)))
 
@@ -100,14 +107,20 @@
   (read-all
     (get folder-names :inbox)))
 
-(defn recent-first [store folder]
+(defn recent-first 
+  "Returns all messages with the recent messages at the front"
+  [store folder]
   (->> (all-messages store folder) reverse))
 
-(defn inbox [user pass]
+(defn inbox 
+  "Extract all messages from your inbox"
+  [user pass]
   (let [store (gen-store user pass)]
     (recent-first store "INBOX")))
 
-(defn get-spam []
+(defn get-spam 
+  "Fetches all messages from the spam folder"
+  []
   (read-all
     (get folder-names :spam)))
 
@@ -128,21 +141,32 @@
   "Find unread messages"
   [folder-name]
   (with-open [connection (gen-store)]
-    (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_ONLY))]
-      (doall (map read-message (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))))
+    (let [folder (doto (.getFolder connection folder-name) 
+                   (.open Folder/READ_ONLY))]
+      (doall (map read-message 
+               (.search folder 
+                 (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))))
 
 (defn mark-all-read
   [folder-name]
   (with-open [connection (gen-store)]
-      (let [folder (doto (.getFolder connection folder-name) (.open Folder/READ_WRITE))
-            messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+      (let [folder (doto (.getFolder connection folder-name) 
+                     (.open Folder/READ_WRITE))
+            messages (.search folder 
+                       (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
          (doall (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages))
         nil)))
 
-  (defn dump
+(defn dump
   "Handy function that dumps out a batch of emails to disk"
   [dir msgs]
   (doseq [msg msgs]
     (.writeTo msg (java.io.FileOutputStream.
       (format "%s%s" dir (str (msg/message-id msg)))))))
+
+;; User API
+;; **********************************************************************
+
+(defn -main [& args]
+ )
 

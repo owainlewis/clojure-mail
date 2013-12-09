@@ -15,7 +15,8 @@
 (defn to 
   "Returns a sequence of receivers"
   [m]
-    (map str (.getRecipients m javax.mail.Message$RecipientType/TO)))
+  (map str 
+    (.getRecipients m javax.mail.Message$RecipientType/TO)))
 
 (defn from [m]
   (.toString
@@ -88,7 +89,7 @@
       (map #(vector (.getName %) (.getValue %)) results))))
 
 (defn- multipart? [m]
-  ^{:doc "Returns true if a message is a multipart email"}
+  "Returns true if a message is a multipart email"
   (.startsWith (content-type m) "multipart"))
 
 (defn- read-multi [mime-multi-part]
@@ -128,6 +129,5 @@
      :multipart? (multipart? msg)
      :content-type (content-type msg)
      :body (message-body msg) }
-  (catch Exception e
-    (prn e))))
+  (catch Exception e {})))
 
