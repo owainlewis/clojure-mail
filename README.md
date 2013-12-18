@@ -2,7 +2,7 @@
 
 
 ```
-[clojure-mail "0.1.3-SNAPSHOT"]
+[clojure-mail "0.1.4"]
 ```
 
 A clojure library mainly aimed at parsing, downloading and reading email from Gmail servers (it works for private domains as well).
