@@ -163,10 +163,3 @@
   (doseq [msg msgs]
     (.writeTo msg (java.io.FileOutputStream.
       (format "%s%s" dir (str (msg/message-id msg)))))))
-
-;; User API
-;; **********************************************************************
-
-(defn -main [& args]
- )
-
