@@ -34,12 +34,33 @@
       (catch javax.mail.AuthenticationFailedException e
         (format "Invalid credentials %s : %s" user pass)))))
 
+(defn connected?
+  "Returns true if a connection is established"
+  [^com.sun.mail.imap.IMAPStore s]
+  (.isConnected s))
+
+(defn close
+  [s]
+  (.close s))
+
+(defn get-default-folder
+  ^{:doc "Returns a Folder object that represents the 'root' of the default
+          namespace presented to the user by the Store."}
+  [^com.sun.mail.imap.IMAPStore s]
+  (.getDefaultFolder s))
+
+(defn get-folder
+  "Return the Folder object corresponding to the given name."
+  [^com.sun.mail.imap.IMAPStore s name]
+  (.getFolder s name))
+
 (def gmail-store
   (let [{:keys [protocol server]} gmail]
     (partial store protocol server)))
 
 (defn all-messages
-  "Given a store and folder returns all messages"
+  "Given a store and folder returns all messages
+   reversed so the newest messages come first"
   [^com.sun.mail.imap.IMAPStore store folder]
   (let [s (.getDefaultFolder store)
         inbox (.getFolder s folder)
@@ -48,7 +69,7 @@
          reverse)))
 
 ;; Message parser
-
+;; *********************************************************
 ;; Utilities for parsing email messages
 
 (defn- mime-type
@@ -78,6 +99,7 @@
    (.getSender m)))
 
 ;; Dates
+;; *********************************************************
 
 (defn date-sent [m]
   (.toString
@@ -88,6 +110,7 @@
     (.getReceivedDate m)))
 
 ;; Flags
+;; *********************************************************
 
 (defn flags [m]
   (.getFlags m))
@@ -162,6 +185,7 @@
       (list (hash-map (content-type msg) (.getContent msg))))))
 
 ;; Public API for working with messages
+;; *********************************************************
 
 (defn read-message [msg]
   "Returns a workable map of the message content.
@@ -178,3 +202,5 @@
      :content-type (content-type msg)
      :body (message-body msg) }
   (catch Exception e {})))
+
+;; *********************************************************
