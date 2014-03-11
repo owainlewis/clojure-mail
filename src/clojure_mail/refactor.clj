@@ -1,10 +1,34 @@
 (ns clojure-mail.refactor
+  (:require [clojure-mail.parser :refer [html->text]])
   (:import [java.util Properties]
            [javax.mail.search FlagTerm]
            [javax.mail.internet MimeMessage
                                 MimeMultipart
                                 InternetAddress]
            [javax.mail Session Store Folder Message Flags Flags$Flag]))
+
+;; Authentication
+;; ***********************************************
+
+(def settings (ref {:email nil :pass nil}))
+
+(defn auth! [email pass]
+  (dosync
+    (ref-set settings
+      {:email email :pass pass})))
+
+(def gmail
+  {:protocol "imaps"
+   :server "imap.gmail.com"})
+
+(defn assert-credentials!
+  "Make sure that a user has set Gmail credentials"
+  []
+  (when (empty? @settings)
+    (let [msg "\nYou must set your Gmail credentials with (auth! email password)\n"]
+      (throw (Exception. msg)))))
+
+;; ***********************************************
 
 (def gmail
   {:protocol "imaps"
@@ -39,7 +63,8 @@
   [^com.sun.mail.imap.IMAPStore s]
   (.isConnected s))
 
-(defn close
+(defn close-store
+  "Close an open IMAP store connection"
   [s]
   (.close s))
 
@@ -204,3 +229,13 @@
   (catch Exception e {})))
 
 ;; *********************************************************
+
+;; Public API
+
+(defn inbox
+  "Get all messages from a users inbox"
+  ([user password limit]
+  (let [store (gmail-store user password)
+        inbox-folder (:inbox folder-names)
+        messages (take limit (all-messages store inbox-folder))]
+        (doall (map #(read-message %) messages)))))

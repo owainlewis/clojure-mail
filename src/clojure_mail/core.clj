@@ -10,7 +10,7 @@
 ;; Settings
 ;; ***************************************************
 
-(def settings (ref {}))
+(def settings (ref {:email nil :pass nil}))
 
 (defn auth! [email pass]
   (dosync
