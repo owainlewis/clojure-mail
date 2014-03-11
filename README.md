@@ -43,6 +43,37 @@ Let's fetch the last 3 messages from our Gmail inbox
 
 ```
 
+An email message is returned as a Clojure map that looks something like this (with body removed)
+
+```clojure
+
+(def m (dissoc (first (inbox 1)) :body)) ;; =>
+
+;; =>
+
+;; {:subject "Re: Presents for Dale's baby",
+;;  :from "Someone <someone@aol.com>",
+;;  :date-recieved "Tue Mar 11 12:54:41 GMT 2014",
+;;  :to ("owain@owainlewis.com"),
+;;  :multipart? true,
+;;  :content-type "multipart/ALTERNATIVE",
+;;  :sender "Someone <someone@aol.com>",
+;;  :date-sent "Tue Mar 11 12:54:36 GMT 2014"}
+
+```
+
+## Parser
+
+HTML emails are evil. There is a simple HTML -> Plain text parser provided if you need to
+do any machine learning type processing on email messages.
+
+```clojure
+(html->text "<h1>I HATE HTML EMAILS</h1>")
+
+;; => "I HATE HTML EMAILS"
+
+```
+
 ## License
 
 Copyright © 2014 Owain Lewis
