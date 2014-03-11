@@ -24,7 +24,7 @@ There are currently some issues with handling large volumes of mail
 ## Authentication
 
 ```clojure
-(set-auth! "username@gmail.com" "password")
+(auth! "username@gmail.com" "password")
 ```
 
 ## Reading email messages
@@ -33,7 +33,7 @@ Let's fetch the last 3 messages from our Gmail inbox
 
 ```clojure
 
-(def inbox-messages (inbox "username@gmail.com" "password" 3))
+(def inbox-messages (inbox 3))
 
 ;; Lets fetch the subject of the latest message
 
