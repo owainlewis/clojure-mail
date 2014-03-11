@@ -16,7 +16,7 @@ There are currently some issues with handling large volumes of mail (i.e hundred
 Require clojure-mail
 
 ```clojure
-(:use [clojure-mail.core])
+(require '[clojure-mail.core :refer :all])
 ```
 
 Quick example of how to read a message from your inbox
@@ -61,7 +61,13 @@ Now we can get 5 messages from our inbox
 (def my-messages (take 5 (get-inbox)))
 ```
 
-And read the first message in our inbox
+We'll need the `message` namespace for reading individual emails. Require it with
+
+```clojure
+(require '[clojure-mail.message :as msg])
+```
+
+To read the first message in our inbox
 
 ```clojure
 (msg/read-message (first (get-inbox)))
