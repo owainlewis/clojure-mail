@@ -2,7 +2,7 @@
 
 
 ```
-[clojure-mail "0.1.4"]
+[clojure-mail "0.1.5"]
 ```
 
 A clojure library mainly aimed at parsing, downloading and reading
