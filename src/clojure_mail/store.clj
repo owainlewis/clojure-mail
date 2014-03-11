@@ -39,8 +39,8 @@
 (defn make-store
   "Create a new mail store"
   [client user pass]
-  (let [protocol (get client :protocol)
-        server (get client :server)]
+  (let [protocol (:protocol client)
+        server (:server client)]
     (try
       (store protocol server user pass)
     (catch javax.mail.AuthenticationFailedException e
