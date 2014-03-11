@@ -61,7 +61,13 @@ Now we can get 5 messages from our inbox
 (def my-messages (take 5 (get-inbox)))
 ```
 
-And read the first message in our inbox
+We'll need the `message` namespace for reading individual emails. Require it with
+
+```clojure
+(require '[clojure-mail.message :as msg])
+```
+
+To read the first message in our inbox
 
 ```clojure
 (msg/read-message (first (get-inbox)))
