@@ -40,7 +40,7 @@
   "Create a new mail store"
   [client user pass]
   (let [protocol (get client :protocol)
-        server (get client :server)]
+        server   (get client :server)]
     (try
       (store protocol server user pass)
     (catch javax.mail.AuthenticationFailedException e

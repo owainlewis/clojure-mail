@@ -1,5 +1,7 @@
 (ns clojure-mail.message
-  (import [javax.mail.internet MimeMessage MimeMultipart InternetAddress]))
+  (import [javax.mail.internet MimeMessage
+                               MimeMultipart
+                               InternetAddress]))
 
 ;; Utilities for parsing email messages
 
@@ -12,10 +14,10 @@
     "text/plain" :plain
     (str "unexpected type, \"" type \")))
 
-(defn to 
+(defn to
   "Returns a sequence of receivers"
   [m]
-  (map str 
+  (map str
     (.getRecipients m javax.mail.Message$RecipientType/TO)))
 
 (defn from [m]
@@ -130,4 +132,3 @@
      :content-type (content-type msg)
      :body (message-body msg) }
   (catch Exception e {})))
-
