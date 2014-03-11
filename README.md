@@ -16,7 +16,7 @@ There are currently some issues with handling large volumes of mail (i.e hundred
 Require clojure-mail
 
 ```clojure
-(:use [clojure-mail.core])
+(require '[clojure-mail.core :refer :all])
 ```
 
 Quick example of how to read a message from your inbox
