@@ -25,6 +25,8 @@ There are currently some issues with handling large volumes of mail
 
 ```clojure
 (auth! "username@gmail.com" "password")
+
+(gen-store)
 ```
 
 ## Reading email messages
@@ -68,6 +70,8 @@ HTML emails are evil. There is a simple HTML -> Plain text parser provided if yo
 do any machine learning type processing on email messages.
 
 ```clojure
+(require '[clojure-mail.parser :refer :all])
+
 (html->text "<h1>I HATE HTML EMAILS</h1>")
 
 ;; => "I HATE HTML EMAILS"
