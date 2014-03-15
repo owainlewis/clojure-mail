@@ -70,6 +70,8 @@ HTML emails are evil. There is a simple HTML -> Plain text parser provided if yo
 do any machine learning type processing on email messages.
 
 ```clojure
+(require '[clojure-mail.parser :refer :all])
+
 (html->text "<h1>I HATE HTML EMAILS</h1>")
 
 ;; => "I HATE HTML EMAILS"
