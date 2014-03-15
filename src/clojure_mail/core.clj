@@ -264,21 +264,29 @@
 ;; Public API for working with messages
 ;; *********************************************************
 
+(defmacro safe-get
+  "try to perform an action else just return nil"
+  [& body]
+  `(try
+    (do ~@body)
+  (catch Exception e#
+    nil)))
+
 (defn read-message [msg]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map"
   (try
-    {:to (to msg)
-     :from (sender msg)
-     :subject (subject msg)
-     :sender (sender msg)
-     :date-sent (date-sent msg)
-     :date-recieved (date-recieved msg)
-     :multipart? (multipart? msg)
-     :content-type (content-type msg)
-     :body (message-body msg) }
-  (catch Exception e nil)))
+    {:to (safe-get (first (to msg)))
+     :from (safe-get (sender msg))
+     :subject (safe-get (subject msg))
+     :sender (safe-get (sender msg))
+     :date-sent (safe-get (date-sent msg))
+     :date-recieved (safe-get (date-recieved msg))
+     :multipart? (safe-get (multipart? msg))
+     :content-type (safe-get (content-type msg))
+     :body (safe-get (message-body msg)) }
+  (catch Exception e {:error e})))
 
 ;; *********************************************************
 
