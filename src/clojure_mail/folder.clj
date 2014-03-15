@@ -13,7 +13,16 @@
   (.getFullName f))
 
 (defn new-message-count [f]
+  "Get number of new messages in folder f"
   (.getNewMessageCount f))
+
+(defn message-count [f]
+  "Get total number of messages in folder f"
+  (.getMessageCount f))
+
+(defn unread-message-count [f]
+  "Get number of unread messages in folder f"
+  (.getUnreadMessageCount f))
 
 (defn get-message-by-uid [f id]
   (.getMessageByUID f id))
@@ -28,3 +37,7 @@
 
 (defn search [f query]
   (.search f query))
+
+(defn list [f]
+  "List all folders under folder f"
+  (.list f))
