@@ -3,6 +3,7 @@
   (:require [clojure-mail.parser :refer [html->text]])
   (:import  [java.util Properties]
             [javax.mail.search FlagTerm]
+            [java.io FileInputStream File]
             [javax.mail.internet MimeMessage
                                  MimeMultipart
                                  InternetAddress]
@@ -54,6 +55,16 @@
     (doseq [[k v] m]
       (.setProperty p (str k) (str v)))
         p))
+
+(defn file->message
+  "read a downloaded mail message in the same format
+   as you would find on the mail server. This can
+   be used to read saved messages from text files
+   and for parsing fixtures in tests etc"
+  [path-to-message]
+  (let [props (Session/getDefaultInstance (Properties.))
+        msg (FileInputStream. (File. path-to-message))]
+    (MimeMessage. props msg)))
 
 ;; Mail store
 ;; *******************************************************
@@ -116,14 +127,17 @@
 ;; *********************************************************
 ;; Utilities for parsing email messages
 
-(defn- mime-type
+(defn mime-type
   "Determine the function to call to get the body text of a message"
-  [msg type]
-  (condp = type
+  [type]
+  (let [infered-type
+         (clojure.string/lower-case
+           (first (clojure.string/split type #"[;]")))]
+  (condp = infered-type
     "multipart/alternative" :multipart
     "text/html" :html
     "text/plain" :plain
-    (str "unexpected type, \"" type \")))
+    (str "unexpected type, \"" type \"))))
 
 (defn to
   "Returns a sequence of receivers"
@@ -133,33 +147,39 @@
 
 (defn from
   [m]
-  (.toString
-    (.getFrom m)))
+  (.getFrom m))
 
 (defn subject
   "Fetch the subject of a mail message"
   [m]
   (.getSubject m))
 
-(defn sender [m]
+(defn sender
+  "Extract the message sender"
+  [m]
   (.toString
    (.getSender m)))
 
 ;; Dates
 ;; *********************************************************
 
-(defn date-sent [m]
+(defn date-sent
+  "Return the date a mail message was sent"
+  [m]
   (.toString
     (.getSentDate m)))
 
-(defn date-recieved [m]
+(defn date-recieved
+  "Return the date a message was recieved"
+  [m]
   (.toString
     (.getReceivedDate m)))
 
 ;; Flags
 ;; *********************************************************
 
-(defn flags [m]
+(defn flags
+  [m]
   (.getFlags m))
 
 (defn content-type [m]
@@ -222,17 +242,24 @@
   (if (multipart? msg)
     (read-multi (get-content msg))))
 
-(defn message-body [^com.sun.mail.imap.IMAPMessage msg]
-  "Read all the body content from a message"
+(defn msg->map
+  "Convert a mail message body into a Clojure map
+   with content type and message contents"
   [msg]
-  (into []
-    (if (multipart? msg)
-      (let [parts (message-parts msg)]
-        (map
-          #(hash-map (.getContentType %) (.getContent %))
-            parts))
-      (list (hash-map (content-type msg)
-              (.getContent msg))))))
+  {:content-type (.getContentType msg)
+   :body (.getContent msg)})
+
+(defn message-body
+  [^com.sun.mail.imap.IMAPMessage msg]
+  "Read all the body content from a message
+   If the message is multipart then a vector is
+   returned containing each message
+   [{:content-type \"TEXT\\PLAIN\" :body \"Foo\"}
+    {:content-type \"TEXT\\HTML\"  :body \"Bar\"}]"
+  [msg]
+  (if (multipart? msg)
+    (map msg->map (message-parts msg))
+    (msg->map msg)))
 
 ;; Public API for working with messages
 ;; *********************************************************
