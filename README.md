@@ -25,6 +25,8 @@ There are currently some issues with handling large volumes of mail
 
 ```clojure
 (auth! "username@gmail.com" "password")
+
+(gen-store)
 ```
 
 ## Reading email messages
