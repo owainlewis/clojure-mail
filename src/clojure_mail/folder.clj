@@ -9,6 +9,11 @@
      (binding [current-folder fd#]
        (do ~@body))))
 
+(defn get-folder
+  "Returns an IMAPFolder instance"
+  [store folder-name]
+  (.getFolder store folder-name))
+
 (defn full-name [f]
   (.getFullName f))
 
