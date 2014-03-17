@@ -39,7 +39,8 @@ This is a complete example showing how to read the subject of your latest Gmail 
 We need to require clojure-mail.core before we begin.
 
 ```clojure
-(:require [clojure-mail.core :refer :all])
+(:require [clojure-mail.core :refer :all]
+          [clojure-mail.message :as message])
 ```
 
 The first thing we need is a mail store which acts as a gateway to our gmail account.
@@ -52,8 +53,15 @@ To create store we only need a gmail username and password
 Now we can fetch email messages from Gmail easily.
 
 ```clojure
-(def my-inbox-messages (inbox store))
+(def my-inbox-messages (take 5 (all-messages store :inbox)))
+
+(def first-message (first my-inbox-messages))
+
+(message/subject first-message) ;; => "Hi! Here are your new links from the weekend"
 ```
+
+Note that the messages returned are Java mail message objects.
+
 
 ## Reading email messages
 
@@ -61,10 +69,17 @@ Now we can fetch email messages from Gmail easily.
 
 (def javamail-message (first inbox-messages))
 
+;; To read the entire message as a clojure map
 (def message (read-message javamail-message))
 
+;; There are also individual methods available in the message namespace. I.e to read the subject
+;; of a javax.mail message
+
+(message/subject javamail-message)
+
 ```
-An email message is returned as a Clojure map that looks something like this (with body removed)
+
+An email message returned as a Clojure map from read-message looks something like this:
 
 ```clojure
 

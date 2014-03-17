@@ -1,4 +1,5 @@
-(ns clojure-mail.message)
+(ns clojure-mail.message
+  (:import [javax.mail.internet InternetAddress]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
@@ -20,7 +21,8 @@
 
 (defn from
   [m]
-  (.getFrom m))
+  (InternetAddress/toString
+    (.getFrom m)))
 
 (defn subject
   "Fetch the subject of a mail message"
@@ -30,8 +32,7 @@
 (defn sender
   "Extract the message sender"
   [m]
-  (.toString
-   (.getSender m)))
+  (.getSender m))
 
 ;; Dates
 ;; *********************************************************

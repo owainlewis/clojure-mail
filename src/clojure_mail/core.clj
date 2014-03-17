@@ -2,6 +2,7 @@
 (ns clojure-mail.core
   (:require [clojure-mail.parser :refer [html->text]]
             [clojure-mail.message :as message]
+            [clojure-mail.message :refer [read-message]]
             [clojure-mail.folder :as folder])
   (:import  [java.util Properties]
             [javax.mail.search FlagTerm]
@@ -128,12 +129,15 @@
    :readwrite Folder/READ_WRITE})
 
 (defn open-folder
+  "Open a folder. Requires that a folder-name be a valid gmail folder
+   i.e :inbox :sent :spam etc"
   ([folder-name perm-level] (open-folder *store* folder-name perm-level))
   ([store folder-name perm-level]
-     (let [folder (get gmail-folder-names folder-name)
-           root-folder (.getDefaultFolder store)
-           found-folder (get-folder root-folder folder)]
-       (doto found-folder (.open (get folder-permissions perm-level))))))
+     (when-let [folder (get gmail-folder-names folder-name)]
+       (let [root-folder (.getDefaultFolder store)
+             found-folder (get-folder root-folder folder)]
+         (doto found-folder
+           (.open (get folder-permissions perm-level)))))))
 
 (defn message-count
   "Returns the number of messages in a folder"
@@ -188,11 +192,11 @@
    reversed so the newest messages come first"
   ([folder-name] (all-messages *store* folder-name))
   ([^com.sun.mail.imap.IMAPStore store folder-name]
-     (let [folder (open-folder folder-name :readonly)]
+     (let [folder (open-folder store folder-name :readonly)]
        (->> (.getMessages folder)
             reverse))))
 
 (defn inbox
   "Get n messages from your inbox"
-  ([] (all-messages *store* "INBOX"))
-  ([store] (all-messages store "INBOX")))
+  ([] (all-messages *store* :inbox))
+  ([store] (all-messages store :inbox)))
