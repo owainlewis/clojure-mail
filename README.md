@@ -1,8 +1,7 @@
 # Clojure-mail
 
-
 ```
-[clojure-mail "0.1.5"]
+[clojure-mail "0.1.6"]
 ```
 
 A clojure library for parsing, downloading and reading
@@ -11,78 +10,89 @@ email from Gmail servers.
 Possible uses for this library include machine learning corpus generation and
 command line mail clients.
 
+## Quickstart
 
-## Setup
-
-```clojure
-(:require [clojure-mail.core :refer :all])
-```
-
-## Authentication
-
-There are two ways to authenticate. The first is to manually create a mail store session like this
+This is a complete example showing how to read the subject of your latest Gmail inbox message
 
 ```clojure
+(ns myproject.core
+  (:require [clojure-mail.core :refer :all]))
 
-(auth! "username@gmail.com" "password")
+(def store (gen-store "user@gmail.com" "password"))
 
-(gen-store)
-```
+(def inbox-messages (inbox store))
 
-If you just want to get something from your inbox you can also pass in your gmail credentials like this
+;; to convert a javamail message into a clojure message we need to call read-message
 
+(def latest (read-message (first inbox-messages)))
 
-```
+;; Let's read the subject of our lastest inbox message
+(:subject latest))
 
-;; Get the last 5 messages from your Gmail inbox
-
-(def messages (inbox "user@gmail.com" "password" 5))
-
-(def message-subject (:subject (first messages)))
-
-;; => "Top Stories from the last 24 hours"
+(keys latest)
+;; => (:subject :from :date-recieved :to :multipart? :content-type :sender :date-sent :body)
 
 ```
+
+## Use
+
+We need to require clojure-mail.core before we begin.
+
+```clojure
+(:require [clojure-mail.core :refer :all]
+          [clojure-mail.message :as message])
+```
+
+The first thing we need is a mail store which acts as a gateway to our gmail account.
+To create store we only need a gmail username and password
+
+```clojure
+(def store (gen-store "user@gmail.com" "mypassword"))
+```
+
+Now we can fetch email messages from Gmail easily.
+
+```clojure
+(def my-inbox-messages (take 5 (all-messages store :inbox)))
+
+(def first-message (first my-inbox-messages))
+
+(message/subject first-message) ;; => "Hi! Here are your new links from the weekend"
+```
+
+Note that the messages returned are Java mail message objects.
 
 
 ## Reading email messages
 
-Let's fetch the last 3 messages from our Gmail inbox
-
 ```clojure
 
-(def inbox-messages (inbox "username@gmail.com" "password" 3))
+(def javamail-message (first inbox-messages))
 
-;; Lets fetch the subject of the latest message
+;; To read the entire message as a clojure map
+(def message (read-message javamail-message))
 
-(:subject (first inbox-messages))
+;; There are also individual methods available in the message namespace. I.e to read the subject
+;; of a javax.mail message
 
-;; => "Booking confirmed (MLC35TJ4): Table for 2 at The Potted Pig 22 March 2014 - at 13:30"
-
-;; The following keys are available on an email message
-
-(keys (first inbox-messages))
-
-(:subject :from :date-recieved :to :multipart? :content-type :sender :date-sent :body)
+(message/subject javamail-message)
 
 ```
 
-An email message is returned as a Clojure map that looks something like this (with body removed)
+An email message returned as a Clojure map from read-message looks something like this:
 
 ```clojure
 
-(def m (dissoc (first (inbox 1)) :body)) ;; =>
-
-;; =>
-
-;; {:subject "Re: Presents for Dale's baby",
-;;  :from "Someone <someone@aol.com>",
-;;  :date-recieved "Tue Mar 11 12:54:41 GMT 2014",
-;;  :to ("owain@owainlewis.com"),
-;;  :multipart? true,
-;;  :content-type "multipart/ALTERNATIVE",
-;;  :sender "Someone <someone@aol.com>",
-;;  :date-sent "Tue Mar 11 12:54:36 GMT 2014"}
+{:subject "Re: Presents for Dale's baby",
+ :from "Someone <someone@aol.com>",
+ :date-recieved "Tue Mar 11 12:54:41 GMT 2014",
+ :to ("owain@owainlewis.com"),
+ :multipart? true,
+ :content-type "multipart/ALTERNATIVE",
+ :sender "Someone <someone@aol.com>",
+ :date-sent "Tue Mar 11 12:54:36 GMT 2014"
+ :body [{:content-type "text/plain" :body "..."}
+        {:content-type "text/html"  :body "..."}]}
 
 ```
 
@@ -111,15 +121,15 @@ Clojure mail can be used to parse existing email messages from file. Take a look
 
 (read-message message)
 
-;; => 
-;; {:subject "Request to share ContractsBuilder", 
-;; :from nil, :date-recieved nil, 
-;; :to "zaphrauk@gmail.com", 
-;; :multipart? true, 
-;; :content-type "multipart/alternative; boundary=90e6ba1efefc44ffe804a5e76c56", 
-;; :sender nil, 
+;; =>
+;; {:subject "Request to share ContractsBuilder",
+;; :from nil, :date-recieved nil,
+;; :to "zaphrauk@gmail.com",
+;; :multipart? true,
+;; :content-type "multipart/alternative; boundary=90e6ba1efefc44ffe804a5e76c56",
+;; :sender nil,
 ;; :date-sent "Fri Jun 17 13:21:19 BST 2011" ..............
- 
+
 ```
 
 ## License
