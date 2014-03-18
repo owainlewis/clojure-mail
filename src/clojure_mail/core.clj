@@ -1,4 +1,3 @@
-
 (ns clojure-mail.core
   (:require [clojure-mail.parser :refer [html->text]]
             [clojure-mail.message :as message]
@@ -180,8 +179,8 @@
   "Handy function that dumps out a batch of emails to disk"
   [msgs]
   (let [message-futures
-         (doall (map
-                  #(future (save-message-to-file %)) msgs))]
+         (doall 
+           (map #(future (save-message-to-file %)) msgs))]
     (map deref message-futures)))
 
 ;; Public API
@@ -194,7 +193,7 @@
   ([^com.sun.mail.imap.IMAPStore store folder-name]
      (let [folder (open-folder store folder-name :readonly)]
        (->> (.getMessages folder)
-            reverse))))
+             reverse))))
 
 (defn inbox
   "Get n messages from your inbox"
