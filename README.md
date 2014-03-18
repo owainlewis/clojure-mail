@@ -96,6 +96,17 @@ An email message returned as a Clojure map from read-message looks something lik
 
 ```
 
+## Searching your inbox
+
+You can easily search your inbox for messages
+
+```clojure
+(def s (gen-store "user@gmail.com" "password"))
+(def results (search-inbox s "projects"))
+
+(->> results first subject) ;; => "Open Source Customisation Projects"
+```
+
 ## Parser
 
 HTML emails are evil. There is a simple HTML -> Plain text parser provided if you need to

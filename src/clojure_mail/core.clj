@@ -200,3 +200,11 @@
   "Get n messages from your inbox"
   ([] (all-messages *store* :inbox))
   ([store] (all-messages store :inbox)))
+
+(defn search-inbox
+  "Search your inbox for a specific term
+   Returns a vector of IMAPMessage objects"
+  [store term]
+  (let [inbox (open-folder store :inbox :readonly)]
+    (into []
+      (folder/search inbox term))))

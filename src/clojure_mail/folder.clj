@@ -1,4 +1,5 @@
-(ns clojure-mail.folder)
+(ns clojure-mail.folder
+  (:import [javax.mail.search SearchTerm AndTerm SubjectTerm BodyTerm]))
 
 ;; note that the get folder fn is part of the store namespace
 
@@ -41,7 +42,8 @@
   (.getMessages folder))
 
 (defn search [f query]
-  (.search f query))
+  (let [search-term (AndTerm. (SubjectTerm. query) (BodyTerm. query))]
+    (.search f search-term)))
 
 (defn list [f]
   "List all folders under folder f"
