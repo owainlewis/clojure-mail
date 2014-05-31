@@ -13,26 +13,27 @@
     "text/plain" :plain
     (str "unexpected type, \"" type \"))))
 
+
+(defn address
+  "Extract an InternetAddress as a clojure map"
+  [a]
+  {:address (.getAddress a)
+   :name (.getPersonal a)})
+
 (defn to
   "Returns a sequence of receivers"
   [m]
-  (map str
+  (map address
     (.getRecipients m javax.mail.Message$RecipientType/TO)))
 
 (defn from
   [m]
-  (InternetAddress/toString
-    (.getFrom m)))
+  (map address (.getFrom m)))
 
 (defn subject
   "Fetch the subject of a mail message"
   [m]
   (.getSubject m))
-
-(defn sender
-  "Extract the message sender"
-  [m]
-  (.getSender m))
 
 ;; Dates
 ;; *********************************************************
@@ -151,12 +152,13 @@
    This is the ultimate goal in extracting a message
    as a clojure map"
   (try
-    {:to (safe-get (first (to msg)))
-     :from (safe-get (sender msg))
+    {:to (safe-get (to msg))
+     :from (safe-get (from msg))
      :subject (safe-get (subject msg))
      :date-sent (safe-get (date-sent msg))
      :date-recieved (safe-get (date-recieved msg))
      :multipart? (safe-get (multipart? msg))
      :content-type (safe-get (content-type msg))
-     :body (safe-get (message-body msg)) }
+     :body (safe-get (message-body msg))
+     :headers (safe-get (message-headers msg))}
   (catch Exception e {:error e})))
