@@ -26,6 +26,18 @@
   (map address
     (.getRecipients m javax.mail.Message$RecipientType/TO)))
 
+(defn cc
+  "Returns a sequence of cc receivers"
+  [m]
+  (map address
+    (.getRecipients m javax.mail.Message$RecipientType/CC)))
+
+(defn bcc
+  "Returns a sequence of bcc receivers"
+  [m]
+  (map address
+    (.getRecipients m javax.mail.Message$RecipientType/BCC)))
+
 (defn from
   [m]
   (map address (.getFrom m)))
@@ -153,6 +165,8 @@
    as a clojure map"
   (try
     {:to (safe-get (to msg))
+     :cc (safe-get (cc msg))
+     :bcc (safe-get (bcc msg))
      :from (safe-get (from msg))
      :subject (safe-get (subject msg))
      :date-sent (safe-get (date-sent msg))
