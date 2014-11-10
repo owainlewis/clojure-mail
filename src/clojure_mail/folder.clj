@@ -1,5 +1,5 @@
 (ns clojure-mail.folder
-  (:import [javax.mail.search SearchTerm AndTerm SubjectTerm BodyTerm]))
+  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]))
 
 ;; note that the get folder fn is part of the store namespace
 
@@ -42,7 +42,7 @@
   (.getMessages folder))
 
 (defn search [f query]
-  (let [search-term (AndTerm. (SubjectTerm. query) (BodyTerm. query))]
+  (let [search-term (OrTerm. (SubjectTerm. query) (BodyTerm. query))]
     (.search f search-term)))
 
 (defn list [f]
