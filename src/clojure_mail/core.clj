@@ -142,7 +142,7 @@
   "Returns the number of messages in a folder"
   ([folder-name] (message-count *store* folder-name))
   ([store folder-name]
-     (let [folder (open-folder folder-name :readonly)]
+     (let [folder (open-folder store folder-name :readonly)]
        (.getMessageCount folder))))
 
 (defn user-flags [message]
@@ -153,7 +153,7 @@
   "Find unread messages"
   ([folder-name] (unread-messages *store* folder-name))
   ([^com.sun.mail.imap.IMAPStore store folder-name]
-     (let [folder (open-folder folder-name :readonly)]
+     (let [folder (open-folder store folder-name :readonly)]
        (.search folder
          (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))
 
@@ -161,7 +161,7 @@
   "Mark all messages in folder as read"
   ([folder-name] (mark-all-read *store* folder-name))
   ([^com.sun.mail.imap.IMAPStore store folder-name]
-     (let [folder (open-folder folder-name :readwrite)
+     (let [folder (open-folder store folder-name :readwrite)
            messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
        (doall (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages))
        nil)))

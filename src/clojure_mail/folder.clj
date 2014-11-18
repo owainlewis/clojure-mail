@@ -1,4 +1,5 @@
 (ns clojure-mail.folder
+  (:refer-clojure :exclude [list])
   (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]))
 
 ;; note that the get folder fn is part of the store namespace
