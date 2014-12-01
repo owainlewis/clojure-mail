@@ -10,8 +10,7 @@
   (condp = infered-type
     "multipart/alternative" :multipart
     "text/html" :html
-    "text/plain" :plain
-    (str "unexpected type, \"" type \"))))
+    "text/plain" :plain)))
 
 (defn to
   "Returns a sequence of receivers"
