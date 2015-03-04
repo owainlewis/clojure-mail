@@ -103,12 +103,13 @@
   "Returns true if a message is a multipart email"
   (.startsWith (content-type m) "multipart"))
 
-(defn- read-multi [mime-multi-part]
+(declare msg->map)
+(defn read-multi [mime-multi-part]
   (let [count (.getCount mime-multi-part)]
     (for [part (map #(.getBodyPart mime-multi-part %) (range count))]
       (if (multipart? part)
-        (.getContent part)
-        part))))
+        (read-multi (.getContent part))
+        (msg->map part)))))
 
 (defn- message-parts
   [^javax.mail.internet.MimeMultipart msg]
@@ -131,7 +132,7 @@
     {:content-type \"TEXT\\HTML\"  :body \"Bar\"}]"
   [msg]
   (if (multipart? msg)
-    (map msg->map (message-parts msg))
+    (message-parts msg)
     (msg->map msg)))
 
 ;; Public API for working with messages
