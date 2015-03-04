@@ -111,10 +111,11 @@
         (read-multi (.getContent part))
         (msg->map part)))))
 
-(defn- message-parts
+(defn message-parts
   [^javax.mail.internet.MimeMultipart msg]
-  (if (multipart? msg)
-    (read-multi (get-content msg))))
+  (when (multipart? msg)
+    (read-multi 
+      (get-content msg))))
 
 (defn msg->map
   "Convert a mail message body into a Clojure map
