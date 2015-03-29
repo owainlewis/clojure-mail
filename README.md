@@ -1,8 +1,6 @@
 # Clojure-mail
 
-```
-[clojure-mail "0.1.6"]
-```
+[![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg)](http://clojars.org/io.forward/clojure-mail)
 
 A clojure library for parsing, downloading and reading
 email from Gmail servers.
@@ -11,6 +9,12 @@ Possible uses for this library include machine learning corpus generation and
 command line mail clients.
 
 ## Quickstart
+
+Add the following dependency to lein
+
+```
+[io.forward/clojure-mail "1.0"]
+```
 
 This is a complete example showing how to read the subject of your latest Gmail inbox message
 
