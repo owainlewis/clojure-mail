@@ -20,7 +20,8 @@ This is a complete example showing how to read the subject of your latest Gmail 
 
 ```clojure
 (ns myproject.core
-  (:require [clojure-mail.core :refer :all]))
+  (:require [clojure-mail.core :refer :all]
+            [clojure-mail.message :refer (read-message)]))
 
 (def store (gen-store "user@gmail.com" "password"))
 
@@ -31,7 +32,7 @@ This is a complete example showing how to read the subject of your latest Gmail 
 (def latest (read-message (first inbox-messages)))
 
 ;; Let's read the subject of our lastest inbox message
-(:subject latest))
+(:subject latest)
 
 (keys latest)
 ;; => (:subject :from :date-recieved :to :multipart? :content-type :sender :date-sent :body)
