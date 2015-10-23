@@ -13,6 +13,6 @@
   "All kinds of junk gets sent in emails so forcibly remove
    anything that isn't utf8"
   ([text]
-    (clean-non-utf8 text ""))
+   (clean-non-utf8 text ""))
   ([text replacement]
-    (.replaceAll text "[^\\p{L}\\p{Nd}]" replacement)))
+   (.replaceAll text "[^\\p{L}\\p{Nd}]" replacement)))

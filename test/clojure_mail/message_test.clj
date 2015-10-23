@@ -4,7 +4,7 @@
 
 (defn load-fixture [fixture]
   (clojure-mail.core/file->message
-    (str "test/clojure_mail/fixtures/" fixture)))
+   (str "test/clojure_mail/fixtures/" fixture)))
 
 (def fixture (load-fixture "25"))
 
@@ -29,4 +29,4 @@
 
 (deftest message-content-type-test
   (testing "should return the message content-type")
-    (is (= (mime-type (content-type fixture)) :multipart)))
+  (is (= (mime-type (content-type fixture)) :multipart)))

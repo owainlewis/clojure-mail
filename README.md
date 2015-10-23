@@ -2,11 +2,7 @@
 
 [![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg)](http://clojars.org/io.forward/clojure-mail)
 
-A clojure library for parsing, downloading and reading
-email from Gmail servers.
-
-Possible uses for this library include machine learning corpus generation and
-command line mail clients.
+A clojure library for parsing, downloading and reading email from IMAP servers.
 
 ## Quickstart
 
@@ -21,21 +17,22 @@ This is a complete example showing how to read the subject of your latest Gmail 
 ```clojure
 (ns myproject.core
   (:require [clojure-mail.core :refer :all]
+            [clojure-mail.gmail :as gmail]
             [clojure-mail.message :refer (read-message)]))
 
-(def store (gen-store "user@gmail.com" "password"))
+(def gstore (gmail/store "user@gmail.com" "password"))
 
-(def inbox-messages (inbox store))
+(def inbox-messages (inbox gstore))
 
 ;; to convert a javamail message into a clojure message we need to call read-message
 
 (def latest (read-message (first inbox-messages)))
 
-;; Let's read the subject of our lastest inbox message
+;; Let's read the subject of our latest inbox message
 (:subject latest)
 
 (keys latest)
-;; => (:subject :from :date-recieved :to :multipart? :content-type :sender :date-sent :body)
+;; => (:id :to :cc :bcc :from :sender :subject :date-sent :date-recieved :multipart? :content-type :body :headers)
 
 ```
 
@@ -48,14 +45,13 @@ We need to require clojure-mail.core before we begin.
           [clojure-mail.message :as message])
 ```
 
-The first thing we need is a mail store which acts as a gateway to our gmail account.
-To create store we only need a gmail username and password
+The first thing we need is a mail store which acts as a gateway to our IMAP account.
 
 ```clojure
-(def store (gen-store "user@gmail.com" "mypassword"))
+(def store (store "imap.gmail.com" "user@gmail.com" "password"))
 ```
 
-Now we can fetch email messages from Gmail easily.
+Now we can fetch email messages easily.
 
 ```clojure
 (def my-inbox-messages (take 5 (all-messages store :inbox)))
@@ -79,8 +75,10 @@ Note that the messages returned are Java mail message objects.
 
 ;; There are also individual methods available in the message namespace. I.e to read the subject
 ;; of a javax.mail message
-
 (message/subject javamail-message)
+
+;; You can also select only the fields you require
+(def message (read-message javamail-message :fields [:id :to :subject]))
 
 ```
 
@@ -89,15 +87,19 @@ An email message returned as a Clojure map from read-message looks something lik
 ```clojure
 
 {:subject "Re: Presents for Dale's baby",
- :from "Someone <someone@aol.com>",
+ :from {:address "<someone@aol.com>" :personal "Someone"}
  :date-recieved "Tue Mar 11 12:54:41 GMT 2014",
- :to ("owain@owainlewis.com"),
+ :to ({:address "owain@owainlewis.com" :personal "Owain Lewis"}),
+ :cc (),
+ :bcc (),
  :multipart? true,
  :content-type "multipart/ALTERNATIVE",
- :sender "Someone <someone@aol.com>",
- :date-sent "Tue Mar 11 12:54:36 GMT 2014"
+ :sender {:address "<someone@aol.com>" :personal "Someone"},
+ :date-sent #inst "2015-10-23T12:19:33.838-00:00"
+ :date-received #inst "2015-10-23T12:19:33.838-00:00"
  :body [{:content-type "text/plain" :body "..."}
-        {:content-type "text/html"  :body "..."}]}
+        {:content-type "text/html"  :body "..."}]
+ :headers {"Subject" "Re: Presents for Dale's baby" .......}
 
 ```
 
@@ -123,6 +125,38 @@ do any machine learning type processing on email messages.
 (html->text "<h1>I HATE HTML EMAILS</h1>")
 
 ;; => "I HATE HTML EMAILS"
+
+```
+
+## Watching a folder
+
+Some IMAP servers allow the use of the IDLE command to receive push notifications when a folder changes.
+
+```clj
+(require '[clojure-mail.events :as events])
+
+;; Create a manager and start listening to the inbox, printing the subject of new messages
+(def manager
+  (let [s (get-session "imaps")
+        gstore (store "imaps" s "imap.gmail.com" "me@gmail.com" "mypassword")
+        folder (open-folder gstore "inbox" :readonly)
+        im (events/new-idle-manager s)]
+    (add-message-count-listener (fn [e]
+                                  (prn "added" (->> e
+                                                    :messages
+                                                    (map read-message)
+                                                    (map :subject))))
+                                #(prn "removed" %)
+                                folder
+                                im)
+    im))
+;; now we wait...
+
+"added" ("added" ("test!")
+"added" ("added" ("another test!")
+
+;; we received some messages and printed them, now we can stop the manager as we are finished
+(events/stop manager)
 
 ```
 
