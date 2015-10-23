@@ -1,8 +1,7 @@
 (ns clojure-mail.message
   (:require [medley.core :refer [filter-keys]])
-  (:import [javax.mail.internet InternetAddress MimeMultipart]
-           [javax.mail Message$RecipientType]
-           [com.sun.mail.imap IMAPMessage]))
+  (:import [javax.mail.internet InternetAddress MimeMultipart MimeMessage]
+           [javax.mail Message$RecipientType]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
@@ -21,7 +20,7 @@
    :name (.getPersonal address)})
 
 (defn recipients
-  [^IMAPMessage msg recipient-type]
+  [^MimeMessage msg recipient-type]
   (map imap-address->map
        (.getRecipients msg recipient-type)))
 
@@ -46,12 +45,12 @@
 
 (defn subject
   "Fetch the subject of a mail message"
-  [^IMAPMessage msg]
+  [^MimeMessage msg]
   (.getSubject msg))
 
 (defn sender
   "Extract the message sender"
-  [^IMAPMessage msg]
+  [^MimeMessage msg]
   (imap-address->map (.getSender msg)))
 
 ;; Dates
@@ -112,7 +111,7 @@
 
 (defn message-headers
   "Returns all the headers from a message"
-  [^IMAPMessage msg]
+  [^MimeMessage msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
     (into {}
@@ -143,7 +142,7 @@
      (get-content msg))))
 
 (defn message-body
-  [^IMAPMessage msg]
+  [^MimeMessage msg]
   "Read all the body content from a message
    If the message is multipart then a vector is
    returned containing each message

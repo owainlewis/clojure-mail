@@ -18,7 +18,7 @@
 (deftest message-to-test
   (testing "should return a sequence of message receievers"
     (is (= (count (to fixture)) 1))
-    (is (= (first (to fixture)) "zaphrauk@gmail.com"))))
+    (is (= (first (to fixture)) {:address "zaphrauk@gmail.com" :name nil}))))
 
 (deftest message-subject-test
   (testing "should return an email message subject"
