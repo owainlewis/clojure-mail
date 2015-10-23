@@ -87,14 +87,14 @@ An email message returned as a Clojure map from read-message looks something lik
 ```clojure
 
 {:subject "Re: Presents for Dale's baby",
- :from {:address "<someone@aol.com>" :personal "Someone"}
+ :from {:address "<someone@aol.com>" :name "Someone"}
  :date-recieved "Tue Mar 11 12:54:41 GMT 2014",
- :to ({:address "owain@owainlewis.com" :personal "Owain Lewis"}),
+ :to ({:address "owain@owainlewis.com" :name "Owain Lewis"}),
  :cc (),
  :bcc (),
  :multipart? true,
  :content-type "multipart/ALTERNATIVE",
- :sender {:address "<someone@aol.com>" :personal "Someone"},
+ :sender {:address "<someone@aol.com>" :name "Someone"},
  :date-sent #inst "2015-10-23T12:19:33.838-00:00"
  :date-received #inst "2015-10-23T12:19:33.838-00:00"
  :body [{:content-type "text/plain" :body "..."}

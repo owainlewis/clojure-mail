@@ -18,7 +18,7 @@
 (defn imap-address->map
   [^InternetAddress address]
   {:address  (.getAddress address)
-   :personal (.getPersonal address)})
+   :name (.getPersonal address)})
 
 (defn recipients
   [^IMAPMessage msg recipient-type]
