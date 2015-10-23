@@ -38,9 +38,12 @@
   (.getMessage f id))
 
 (defn get-messages
-  "Gets all messages from folder f"
-  [folder]
-  (.getMessages folder))
+  "Gets all messages from folder f or get the Message objects for message numbers ranging from start through end,
+  both start and end inclusive. Note that message numbers start at 1, not 0."
+  ([folder]
+   (.getMessages folder))
+  ([folder start end]
+   (.getMessages folder start end)))
 
 (defn search [f query]
   (let [search-term (OrTerm. (SubjectTerm. query) (BodyTerm. query))]
