@@ -4,7 +4,7 @@
 
 (defn load-fixture [fixture]
   (clojure-mail.core/file->message
-    (str "test/clojure_mail/fixtures/" fixture)))
+   (str "test/clojure_mail/fixtures/" fixture)))
 
 (def fixture (load-fixture "25"))
 
@@ -18,7 +18,7 @@
 (deftest message-to-test
   (testing "should return a sequence of message receievers"
     (is (= (count (to fixture)) 1))
-    (is (= (first (to fixture)) "zaphrauk@gmail.com"))))
+    (is (= (first (to fixture)) {:address "zaphrauk@gmail.com" :name nil}))))
 
 (deftest message-subject-test
   (testing "should return an email message subject"
@@ -29,4 +29,4 @@
 
 (deftest message-content-type-test
   (testing "should return the message content-type")
-    (is (= (mime-type (content-type fixture)) :multipart)))
+  (is (= (mime-type (content-type fixture)) :multipart)))

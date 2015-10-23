@@ -1,37 +1,57 @@
 (ns clojure-mail.message
-  (:import [javax.mail.internet InternetAddress]))
+  (:require [medley.core :refer [filter-keys]])
+  (:import [javax.mail.internet InternetAddress MimeMultipart MimeMessage]
+           [javax.mail Message$RecipientType]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
   [type]
   (let [infered-type
-         (clojure.string/lower-case
-           (first (clojure.string/split type #"[;]")))]
-  (condp = infered-type
-    "multipart/alternative" :multipart
-    "text/html" :html
-    "text/plain" :plain)))
+        (clojure.string/lower-case
+         (first (clojure.string/split type #"[;]")))]
+    (condp = infered-type
+      "multipart/alternative" :multipart
+      "text/html" :html
+      "text/plain" :plain)))
+
+(defn imap-address->map
+  [^InternetAddress address]
+  {:address  (.getAddress address)
+   :name (.getPersonal address)})
+
+(defn recipients
+  [^MimeMessage msg recipient-type]
+  (map imap-address->map
+       (.getRecipients msg recipient-type)))
 
 (defn to
   "Returns a sequence of receivers"
   [m]
-  (map str
-    (.getRecipients m javax.mail.Message$RecipientType/TO)))
+  (recipients m Message$RecipientType/TO))
+
+(defn cc
+  "Returns a sequence of receivers"
+  [m]
+  (recipients m Message$RecipientType/CC))
+
+(defn bcc
+  "Returns a sequence of receivers"
+  [m]
+  (recipients m Message$RecipientType/BCC))
 
 (defn from
   [m]
-  (InternetAddress/toString
-    (.getFrom m)))
+  (imap-address->map (.getFrom m)))
 
 (defn subject
   "Fetch the subject of a mail message"
-  [m]
-  (.getSubject m))
+  [^MimeMessage msg]
+  (.getSubject msg))
 
 (defn sender
   "Extract the message sender"
-  [m]
-  (.getSender m))
+  [^MimeMessage msg]
+  (imap-address->map (.getSender msg)))
 
 ;; Dates
 ;; *********************************************************
@@ -39,14 +59,12 @@
 (defn date-sent
   "Return the date a mail message was sent"
   [m]
-  (.toString
-    (.getSentDate m)))
+  (.getSentDate m))
 
-(defn date-recieved
-  "Return the date a message was recieved"
+(defn date-received
+  "Return the date a message was received"
   [m]
-  (.toString
-    (.getReceivedDate m)))
+  (.getReceivedDate m))
 
 ;; Flags
 ;; *********************************************************
@@ -63,7 +81,7 @@
   [message flag]
   (let [f (flags message)]
     (boolean
-      (.contains f flag))))
+     (.contains f flag))))
 
 (defn read?
   "Checks if this message has been read"
@@ -93,17 +111,23 @@
 
 (defn message-headers
   "Returns all the headers from a message"
-  [^com.sun.mail.imap.IMAPMessage msg]
+  [^MimeMessage msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
     (into {}
-      (map #(vector (.getName %) (.getValue %)) results))))
+          (map #(vector (.getName %) (.getValue %)) results))))
 
 (defn- multipart? [m]
   "Returns true if a message is a multipart email"
   (.startsWith (content-type m) "multipart"))
 
-(declare msg->map)
+(defn msg->map
+  "Convert a mail message body into a Clojure map
+   with content type and message contents"
+  [msg]
+  {:content-type (.getContentType msg)
+   :body         (.getContent msg)})
+
 (defn read-multi [mime-multi-part]
   (let [count (.getCount mime-multi-part)]
     (for [part (map #(.getBodyPart mime-multi-part %) (range count))]
@@ -112,20 +136,13 @@
         (msg->map part)))))
 
 (defn message-parts
-  [^javax.mail.internet.MimeMultipart msg]
+  [^MimeMultipart msg]
   (when (multipart? msg)
-    (read-multi 
-      (get-content msg))))
-
-(defn msg->map
-  "Convert a mail message body into a Clojure map
-   with content type and message contents"
-  [msg]
-  {:content-type (.getContentType msg)
-   :body (.getContent msg)})
+    (read-multi
+     (get-content msg))))
 
 (defn message-body
-  [^com.sun.mail.imap.IMAPMessage msg]
+  [^MimeMessage msg]
   "Read all the body content from a message
    If the message is multipart then a vector is
    returned containing each message
@@ -136,28 +153,38 @@
     (message-parts msg)
     (msg->map msg)))
 
-;; Public API for working with messages
-;; *********************************************************
-
 (defmacro safe-get
   "try to perform an action else just return nil"
   [& body]
   `(try
-    (do ~@body)
-  (catch Exception e#
-    nil)))
+     (do ~@body)
+     (catch Exception e#
+       nil)))
 
-(defn read-message [msg]
+;; Public API for working with messages
+;; *********************************************************
+
+(defn read-message [msg & {:keys [fields]}]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
-   as a clojure map"
-  (try
-    {:to (safe-get (first (to msg)))
-     :from (safe-get (sender msg))
-     :subject (safe-get (subject msg))
-     :date-sent (safe-get (date-sent msg))
-     :date-recieved (safe-get (date-recieved msg))
-     :multipart? (safe-get (multipart? msg))
-     :content-type (safe-get (content-type msg))
-     :body (safe-get (message-body msg)) }
-  (catch Exception e {:error e})))
+   as a clojure map
+   Options:
+   fields - a list of the available fields you want to return, defaults to all fields"
+  (let [message (try
+                  {:id            (safe-get (id msg))
+                   :to            (safe-get (to msg))
+                   :cc            (safe-get (cc msg))
+                   :bcc           (safe-get (bcc msg))
+                   :from          (safe-get (from msg))
+                   :sender        (safe-get (sender msg))
+                   :subject       (safe-get (subject msg))
+                   :date-sent     (safe-get (date-sent msg))
+                   :date-received (safe-get (date-received msg))
+                   :multipart?    (safe-get (multipart? msg))
+                   :content-type  (safe-get (content-type msg))
+                   :body          (safe-get (message-body msg))
+                   :headers       (safe-get (message-headers msg))}
+                  (catch Exception e {:error e}))]
+    (if fields
+      (filter-keys (set fields) message)
+      message)))
