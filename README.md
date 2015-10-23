@@ -1,6 +1,6 @@
 # Clojure-mail
 
-[![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg)](http://clojars.org/io.forward/clojure-mail)
+[![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg#)](http://clojars.org/io.forward/clojure-mail)
 
 A clojure library for parsing, downloading and reading email from IMAP servers.
 
