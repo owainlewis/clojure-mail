@@ -6,12 +6,6 @@ A clojure library for parsing, downloading and reading email from IMAP servers.
 
 ## Quickstart
 
-Add the following dependency to lein
-
-```
-[io.forward/clojure-mail "1.0"]
-```
-
 This is a complete example showing how to read the subject of your latest Gmail inbox message
 
 ```clojure
