@@ -1,16 +1,10 @@
 # Clojure-mail
 
-[![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg)](http://clojars.org/io.forward/clojure-mail)
+[![Clojars Project](http://clojars.org/io.forward/clojure-mail/latest-version.svg#)](http://clojars.org/io.forward/clojure-mail)
 
 A clojure library for parsing, downloading and reading email from IMAP servers.
 
 ## Quickstart
-
-Add the following dependency to lein
-
-```
-[io.forward/clojure-mail "1.0"]
-```
 
 This is a complete example showing how to read the subject of your latest Gmail inbox message
 
