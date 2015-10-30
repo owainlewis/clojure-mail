@@ -45,7 +45,7 @@
   When bulk fetching messages you can pre-fetch these items based on a com.sun.mail.imap.FetchProfileItem
   f - the folder from which to fetch the messages
   ms - the messages to fetch
-  :fecth-profile - optional fetch profile, defaults to entire message. fetch profiles are:
+  :fetch-profile - optional fetch profile, defaults to entire message. fetch profiles are:
 
       :message
       :headers
