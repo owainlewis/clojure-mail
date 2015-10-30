@@ -41,7 +41,7 @@
 
 (defn from
   [m]
-  (imap-address->map (.getFrom m)))
+  (map imap-address->map (.getFrom m)))
 
 (defn subject
   "Fetch the subject of a mail message"
@@ -51,7 +51,9 @@
 (defn sender
   "Extract the message sender"
   [^MimeMessage msg]
-  (imap-address->map (.getSender msg)))
+  (let [address (.getSender msg)]
+    (when address
+      (imap-address->map address))))
 
 ;; Dates
 ;; *********************************************************
