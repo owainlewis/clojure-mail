@@ -1,7 +1,7 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
   (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]
-           (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem)
+           (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (javax.mail FetchProfile)))
 
 ;; note that the get folder fn is part of the store namespace
@@ -64,7 +64,7 @@
                :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
                :size IMAPFolder$FetchProfileItem/SIZE)
         _ (.add fp item)]
-    (.fetch f ms fp)))
+    (.fetch f (into-array IMAPMessage ms) fp)))
 
 (defn get-messages
   "Gets all messages from folder f or get the Message objects for message numbers ranging from start through end,
