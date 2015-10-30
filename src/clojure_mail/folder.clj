@@ -1,13 +1,15 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]))
+  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]
+           (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem)
+           (javax.mail FetchProfile)))
 
 ;; note that the get folder fn is part of the store namespace
 
 (def ^:dynamic current-folder)
 
 (defmacro with-folder [folder store & body]
-  `(let [fd# (doto (.getFolder ~store ~folder) (.open Folder/READ_ONLY))]
+  `(let [fd# (doto (.getFolder ~store ~folder) (.open IMAPFolder/READ_ONLY))]
      (binding [current-folder fd#]
        (do ~@body))))
 
@@ -36,6 +38,33 @@
 
 (defn get-message [f id]
   (.getMessage f id))
+
+(defn fetch-messages
+  "Pre-fetch message attributes for a given fetch profile.
+  Messages are retrieved as light weight objects and individual fields such as headers or body are populated lazily.
+  When bulk fetching messages you can pre-fetch these items based on a com.sun.mail.imap.FetchProfileItem
+  f - the folder from which to fetch the messages
+  ms - the messages to fetch
+  :fecth-profile - optional fetch profile, defaults to entire message. fetch profiles are:
+
+      :message
+      :headers
+      :flags
+      :envelope
+      :content-info
+      :size
+      "
+  [f ms & {:keys [fetch-profile] :or {fetch-profile :message}}]
+  (let [fp (FetchProfile.)
+        item (condp = fetch-profile
+               :message IMAPFolder$FetchProfileItem/MESSAGE
+               :headers IMAPFolder$FetchProfileItem/HEADERS
+               :flags IMAPFolder$FetchProfileItem/FLAGS
+               :envelope IMAPFolder$FetchProfileItem/ENVELOPE
+               :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
+               :size IMAPFolder$FetchProfileItem/SIZE)
+        _ (.add fp item)]
+    (.fetch f ms fp)))
 
 (defn get-messages
   "Gets all messages from folder f or get the Message objects for message numbers ranging from start through end,

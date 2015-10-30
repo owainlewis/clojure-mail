@@ -153,13 +153,13 @@
     (message-parts msg)
     (msg->map msg)))
 
-(defmacro safe-get
-  "try to perform an action else just return nil"
-  [& body]
-  `(try
-     (do ~@body)
-     (catch Exception e#
-       nil)))
+(defn add-field
+  "add the result of (f msg) to a map m, if there is an Exception, add the Exception to the :error field of the map"
+  [msg m k f]
+  (try
+    (assoc m k (f msg))
+    (catch Exception e
+      (update-in m [:errors] (partial cons e)))))
 
 ;; Public API for working with messages
 ;; *********************************************************
@@ -167,24 +167,23 @@
 (defn read-message [msg & {:keys [fields]}]
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
-   as a clojure map
+   as a clojure map.
+   Any errors that occured while fetching the fields are added to the :errors field of the map.
    Options:
    fields - a list of the available fields you want to return, defaults to all fields"
-  (let [message (try
-                  {:id            (safe-get (id msg))
-                   :to            (safe-get (to msg))
-                   :cc            (safe-get (cc msg))
-                   :bcc           (safe-get (bcc msg))
-                   :from          (safe-get (from msg))
-                   :sender        (safe-get (sender msg))
-                   :subject       (safe-get (subject msg))
-                   :date-sent     (safe-get (date-sent msg))
-                   :date-received (safe-get (date-received msg))
-                   :multipart?    (safe-get (multipart? msg))
-                   :content-type  (safe-get (content-type msg))
-                   :body          (safe-get (message-body msg))
-                   :headers       (safe-get (message-headers msg))}
-                  (catch Exception e {:error e}))]
-    (if fields
-      (filter-keys (set fields) message)
-      message)))
+  (let [fields-map {:id id
+                    :to to
+                    :cc cc
+                    :bcc bcc
+                    :from from
+                    :sender sender
+                    :date-sent date-sent
+                    :date-received date-received
+                    :multipart? multipart?
+                    :content-type content-type
+                    :body message-body
+                    :headers message-headers}
+        kvs (if fields
+              (filter-keys (set fields) fields-map)
+              fields-map)]
+    (reduce-kv (partial add-field msg) {} kvs)))
