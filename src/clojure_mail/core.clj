@@ -63,18 +63,12 @@
   ([protocol server email pass]
    (let [p (as-properties
             {"mail.store.protocol"                         protocol
-             (format "mail.%s.usesocketchannels" protocol) true})]
-     (try
-       (doto (.getStore (Session/getDefaultInstance p) protocol)
-         (.connect server email pass))
-       (catch AuthenticationFailedException e
-         (format "Invalid credentials %s : %s" email pass)))))
+             (format "mail.%s.usesocketchannels" protocol) true})
+         session (Session/getDefaultInstance p)]
+     (store protocol session server email pass)))
   ([protocol session server email pass]
-   (try
-     (doto (.getStore session protocol)
-       (.connect server email pass))
-     (catch AuthenticationFailedException e
-       (format "Invalid credentials %s : %s" email pass)))))
+   (doto (.getStore session protocol)
+     (.connect server email pass))))
 
 (defn connected?
   "Returns true if a connection is established"
