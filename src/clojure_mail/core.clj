@@ -8,9 +8,9 @@
            [java.io FileInputStream File]
            [javax.mail.internet MimeMessage]
            [javax.mail Session
-            Folder
-            Flags
-            Flags$Flag AuthenticationFailedException]
+                       Folder
+                       Flags
+                       Flags$Flag AuthenticationFailedException]
            (com.sun.mail.imap IMAPStore)))
 
 (defonce ^:dynamic *store* nil)
@@ -51,24 +51,48 @@
 (defn get-session
   [protocol]
   (let [p (as-properties
-           {"mail.store.protocol"                         protocol
-            (format "mail.%s.usesocketchannels" protocol) true})]
+            {"mail.store.protocol"                         protocol
+             (format "mail.%s.usesocketchannels" protocol) true})]
     (Session/getInstance p)))
+
+(defn server->host-port
+  "Given a protocol (`\"imap\"` or `\"imaps\"`) and a `server` that can be
+
+   * a `String` with the hostname
+   * a `vector` of the form `[hostname, port]`
+
+   It returns a vector `[host, port]` using the `protocol` well-known
+   ports if required."
+  [protocol server]
+  (let [default-port (case (keyword protocol) :imap 143 :imaps 943)]
+    (if (sequential? server)
+      (do
+        (when (empty? server)
+          (throw (IllegalArgumentException. "Empty sequential server")))
+        (if (> (count server) 1)
+          (vec (take 2 server))
+          [(first server) default-port]))
+      [server default-port])))
 
 (defn store
   "A store models a message store and its access protocol,
-   for storing and retrieving messages"
+   for storing and retrieving messages.
+   The `server` parameter can be a String with the hostname or
+   a vector like [^String hostname ^int port]. The first form will
+   make the connection use the default ports for the defined
+   `protocol`."
   ([server email pass]
    (store "imaps" server email pass))
   ([protocol server email pass]
    (let [p (as-properties
-            {"mail.store.protocol"                         protocol
-             (format "mail.%s.usesocketchannels" protocol) true})
-         session (Session/getDefaultInstance p)]
+             {"mail.store.protocol"                         protocol
+              (format "mail.%s.usesocketchannels" protocol) true})
+         session (Session/getInstance p)]
      (store protocol session server email pass)))
   ([protocol session server email pass]
-   (doto (.getStore session protocol)
-     (.connect server email pass))))
+   (let [[target-host target-port] (server->host-port protocol server)]
+     (doto (.getStore session protocol)
+       (.connect ^String target-host ^int target-port ^String email ^String pass)))))
 
 (defn connected?
   "Returns true if a connection is established"
@@ -97,7 +121,7 @@
   "Check if a folder is a sub folder"
   (fn [folder]
     (if (= 0 (bit-and
-              (.getType folder) Folder/HOLDS_FOLDERS))
+               (.getType folder) Folder/HOLDS_FOLDERS))
       false
       true)))
 
@@ -106,10 +130,10 @@
   ([store] (folders store (.getDefaultFolder store)))
   ([store f]
    (map
-    #(cons (.getName %)
-           (if (sub-folder? %)
-             (folders store %)))
-    (.list f))))
+     #(cons (.getName %)
+            (if (sub-folder? %)
+              (folders store %)))
+     (.list f))))
 
 (def folder-permissions
   {:readonly  Folder/READ_ONLY
@@ -159,14 +183,14 @@
                (drop 1 (message/id message)))]
     (.writeTo message
               (java.io.FileOutputStream.
-               filename))))
+                filename))))
 
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [msgs]
   (let [message-futures
         (doall
-         (map #(future (save-message-to-file %)) msgs))]
+          (map #(future (save-message-to-file %)) msgs))]
     (map deref message-futures)))
 
 ;; Public API

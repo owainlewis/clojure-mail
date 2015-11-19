@@ -10,3 +10,6 @@ pom.xml
 .lein-plugins
 .DS_Store
 .nrepl-port
+*.iml
+.idea/
+.lein-repl-history
