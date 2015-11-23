@@ -1,10 +1,11 @@
 (ns clojure-mail.message-test
   (:require [clojure.test :refer :all]
-            [clojure-mail.message :refer :all]))
+            [clojure-mail.message :refer :all]
+            [clojure-mail.core :refer [file->message]]
+            [clojure.java.io :as io]))
 
 (defn load-fixture [fixture]
-  (clojure-mail.core/file->message
-   (str "test/clojure_mail/fixtures/" fixture)))
+  (->> (str "emails/" fixture) io/resource io/file file->message))
 
 (def fixture (load-fixture "25"))
 

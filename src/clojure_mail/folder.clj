@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [list])
   (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
-           (javax.mail FetchProfile)))
+           (javax.mail FetchProfile FetchProfile$Item)))
 
 ;; note that the get folder fn is part of the store namespace
 
@@ -21,16 +21,19 @@
 (defn full-name [f]
   (.getFullName f))
 
-(defn new-message-count [f]
+(defn new-message-count
   "Get number of new messages in folder f"
+  [f]
   (.getNewMessageCount f))
 
-(defn message-count [f]
+(defn message-count
   "Get total number of messages in folder f"
+  [f]
   (.getMessageCount f))
 
-(defn unread-message-count [f]
+(defn unread-message-count
   "Get number of unread messages in folder f"
+  [f]
   (.getUnreadMessageCount f))
 
 (defn get-message-by-uid [f id]
@@ -62,7 +65,7 @@
                :flags IMAPFolder$FetchProfileItem/FLAGS
                :envelope IMAPFolder$FetchProfileItem/ENVELOPE
                :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
-               :size IMAPFolder$FetchProfileItem/SIZE)
+               :size FetchProfile$Item/SIZE)
         _ (.add fp item)]
     (.fetch f (into-array IMAPMessage ms) fp)))
 
@@ -78,6 +81,7 @@
   (let [search-term (OrTerm. (SubjectTerm. query) (BodyTerm. query))]
     (.search f search-term)))
 
-(defn list [f]
+(defn list
   "List all folders under folder f"
+  [f]
   (.list f))
