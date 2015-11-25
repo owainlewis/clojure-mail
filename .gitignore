@@ -12,4 +12,5 @@ pom.xml
 .nrepl-port
 *.iml
 .idea/
+/projectFilesBackup
 .lein-repl-history

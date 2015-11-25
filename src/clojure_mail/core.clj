@@ -42,7 +42,9 @@
    and for parsing fixtures in tests etc"
   [path-to-message]
   (let [props (Session/getDefaultInstance (Properties.))
-        msg (FileInputStream. (File. path-to-message))]
+        ;; removed File since FileInputStream is able
+        ;; to work from File or String (path)
+        msg (FileInputStream. path-to-message)]
     (MimeMessage. props msg)))
 
 ;; Mail store
@@ -173,8 +175,7 @@
   ([^IMAPStore store folder-name]
    (let [folder (open-folder store folder-name :readwrite)
          messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-     (doall (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages))
-     nil)))
+     (dorun (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages)))))
 
 (defn save-message-to-file
   [message]

@@ -119,8 +119,9 @@
     (into {}
           (map #(vector (.getName %) (.getValue %)) results))))
 
-(defn- multipart? [m]
+(defn- multipart?
   "Returns true if a message is a multipart email"
+  [m]
   (.startsWith (content-type m) "multipart"))
 
 (defn msg->map
@@ -144,13 +145,12 @@
      (get-content msg))))
 
 (defn message-body
-  [^MimeMessage msg]
   "Read all the body content from a message
    If the message is multipart then a vector is
    returned containing each message
    [{:content-type \"TEXT\\PLAIN\" :body \"Foo\"}
     {:content-type \"TEXT\\HTML\"  :body \"Bar\"}]"
-  [msg]
+  [^MimeMessage msg]
   (if (multipart? msg)
     (message-parts msg)
     (msg->map msg)))
@@ -166,13 +166,14 @@
 ;; Public API for working with messages
 ;; *********************************************************
 
-(defn read-message [msg & {:keys [fields]}]
+(defn read-message
   "Returns a workable map of the message content.
    This is the ultimate goal in extracting a message
    as a clojure map.
    Any errors that occured while fetching the fields are added to the :errors field of the map.
    Options:
    fields - a list of the available fields you want to return, defaults to all fields"
+  [msg & {:keys [fields]}]
   (let [fields-map {:id id
                     :to to
                     :cc cc
