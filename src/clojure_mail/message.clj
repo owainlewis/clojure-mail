@@ -116,8 +116,8 @@
   [^MimeMessage msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
-    (into {}
-          (map #(vector (.getName %) (.getValue %)) results))))
+    (into []
+          (map #(hash-map (.getName %) (.getValue %)) results))))
 
 (defn- multipart?
   "Returns true if a message is a multipart email"
