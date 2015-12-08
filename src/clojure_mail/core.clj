@@ -98,8 +98,7 @@
 
 (defn xoauth2-store
   ([server email oauth-token]
-   (xoauth2-store "imaps" server email oauth-token)
-   )
+   (xoauth2-store "imaps" server email oauth-token))
   ([protocol server email oauth-token]
    (let [p (as-properties
             {(format "mail.%s.ssl.enable" protocol) true
@@ -109,8 +108,7 @@
              (format "mail.%s.auth.mechanisms" protocol) "XOAUTH2"
              (format "mail.%s.usesocketchannels" protocol) true})
          session (Session/getInstance p)]
-     (store protocol session server email oauth-token)
-     )))
+     (store protocol session server email oauth-token))))
 
 (defn connected?
   "Returns true if a connection is established"

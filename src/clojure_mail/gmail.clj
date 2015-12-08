@@ -12,7 +12,7 @@
 
 (defn xoauth-store
   ([email oauth-access-token]
-   (mail/store "imaps" "imap.gmail.com"
+   (mail/xoauth2-store "imaps" "imap.gmail.com" email oauth-access-token)))
 
 (def gmail-folders
   {:inbox "INBOX"
