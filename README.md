@@ -45,6 +45,12 @@ The first thing we need is a mail store which acts as a gateway to our IMAP acco
 (def store (store "imap.gmail.com" "user@gmail.com" "password"))
 ```
 
+You can also authenticate using an Oauth token.
+
+```clojure
+(def store (xoauth2-store "imap.gmail.com" "user@gmail.com" "user-oauth-token"))
+```
+
 Now we can fetch email messages easily.
 
 ```clojure
