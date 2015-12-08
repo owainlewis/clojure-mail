@@ -10,6 +10,10 @@
   ([session email password]
    (mail/store "imaps" session "imap.gmail.com" email password)))
 
+(defn xoauth-store
+  ([email oauth-access-token]
+   (mail/store "imaps" "imap.gmail.com"
+
 (def gmail-folders
   {:inbox "INBOX"
    :all   "[Gmail]/All Mail"

@@ -8,9 +8,9 @@
            [java.io FileInputStream File]
            [javax.mail.internet MimeMessage]
            [javax.mail Session
-                       Folder
-                       Flags
-                       Flags$Flag AuthenticationFailedException]
+            Folder
+            Flags
+            Flags$Flag AuthenticationFailedException]
            (com.sun.mail.imap IMAPStore)))
 
 (defonce ^:dynamic *store* nil)
@@ -53,8 +53,8 @@
 (defn get-session
   [protocol]
   (let [p (as-properties
-            {"mail.store.protocol"                         protocol
-             (format "mail.%s.usesocketchannels" protocol) true})]
+           {"mail.store.protocol"                         protocol
+            (format "mail.%s.usesocketchannels" protocol) true})]
     (Session/getInstance p)))
 
 (defn server->host-port
@@ -87,14 +87,30 @@
    (store "imaps" server email pass))
   ([protocol server email pass]
    (let [p (as-properties
-             {"mail.store.protocol"                         protocol
-              (format "mail.%s.usesocketchannels" protocol) true})
+            {"mail.store.protocol"                         protocol
+             (format "mail.%s.usesocketchannels" protocol) true})
          session (Session/getInstance p)]
      (store protocol session server email pass)))
   ([protocol session server email pass]
    (let [[target-host target-port] (server->host-port protocol server)]
      (doto (.getStore session protocol)
        (.connect ^String target-host ^int target-port ^String email ^String pass)))))
+
+(defn xoauth2-store
+  ([server email oauth-token]
+   (xoauth2-store "imaps" server email oauth-token)
+   )
+  ([protocol server email oauth-token]
+   (let [p (as-properties
+            {(format "mail.%s.ssl.enable" protocol) true
+             (format "mail.%s.sasl.enable" protocol) true
+             (format "mail.%s.auth.login.disable" protocol) true
+             (format "mail.%s.auth.plain.disable" protocol) true
+             (format "mail.%s.auth.mechanisms" protocol) "XOAUTH2"
+             (format "mail.%s.usesocketchannels" protocol) true})
+         session (Session/getInstance p)]
+     (store protocol session server email oauth-token)
+     )))
 
 (defn connected?
   "Returns true if a connection is established"
@@ -123,7 +139,7 @@
   "Check if a folder is a sub folder"
   (fn [folder]
     (if (= 0 (bit-and
-               (.getType folder) Folder/HOLDS_FOLDERS))
+              (.getType folder) Folder/HOLDS_FOLDERS))
       false
       true)))
 
@@ -132,10 +148,10 @@
   ([store] (folders store (.getDefaultFolder store)))
   ([store f]
    (map
-     #(cons (.getName %)
-            (if (sub-folder? %)
-              (folders store %)))
-     (.list f))))
+    #(cons (.getName %)
+           (if (sub-folder? %)
+             (folders store %)))
+    (.list f))))
 
 (def folder-permissions
   {:readonly  Folder/READ_ONLY
@@ -184,14 +200,14 @@
                (drop 1 (message/id message)))]
     (.writeTo message
               (java.io.FileOutputStream.
-                filename))))
+               filename))))
 
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
   [msgs]
   (let [message-futures
         (doall
-          (map #(future (save-message-to-file %)) msgs))]
+         (map #(future (save-message-to-file %)) msgs))]
     (map deref message-futures)))
 
 ;; Public API
