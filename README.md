@@ -184,6 +184,6 @@ Clojure mail can be used to parse existing email messages from file. Take a look
 
 ## License
 
-Copyright © 2014 Owain Lewis
+Copyright © 2015 Owain Lewis
 
 Distributed under the Eclipse Public License, the same as Clojure.
