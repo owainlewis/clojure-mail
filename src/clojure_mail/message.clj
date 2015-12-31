@@ -180,6 +180,7 @@
                     :bcc bcc
                     :from from
                     :sender sender
+                    :subject subject
                     :date-sent date-sent
                     :date-received date-received
                     :multipart? multipart?
