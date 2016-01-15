@@ -66,7 +66,7 @@
    It returns a vector `[host, port]` using the `protocol` well-known
    ports if required."
   [protocol server]
-  (let [default-port (case (keyword protocol) :imap 143 :imaps 943)]
+  (let [default-port (case (keyword protocol) :imap 143 :imaps 993)]
     (if (sequential? server)
       (do
         (when (empty? server)
