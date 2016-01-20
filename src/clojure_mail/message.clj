@@ -55,9 +55,6 @@
     (when address
       (imap-address->map address))))
 
-;; Dates
-;; *********************************************************
-
 (defn date-sent
   "Return the date a mail message was sent"
   [m]
@@ -67,9 +64,6 @@
   "Return the date a message was received"
   [m]
   (.getReceivedDate m))
-
-;; Flags
-;; *********************************************************
 
 (defn flags
   [m]
@@ -162,9 +156,6 @@
     (assoc m k (f msg))
     (catch Exception e
       (update-in m [:errors] (partial cons e)))))
-
-;; Public API for working with messages
-;; *********************************************************
 
 (defn read-message
   "Returns a workable map of the message content.
