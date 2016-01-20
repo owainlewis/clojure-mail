@@ -47,9 +47,6 @@
         msg (FileInputStream. path-to-message)]
     (MimeMessage. props msg)))
 
-;; Mail store
-;; *******************************************************
-
 (defn get-session
   [protocol]
   (let [p (as-properties
@@ -136,8 +133,6 @@
   [^IMAPStore s name]
   (.getFolder s name))
 
-;; *********************************************************
-
 (def sub-folder?
   "Check if a folder is a sub folder"
   (fn [folder]
@@ -212,9 +207,6 @@
         (doall
           (map #(future (save-message-to-file %)) msgs))]
     (map deref message-futures)))
-
-;; Public API
-;; *********************************************************
 
 (defn all-messages
   "Given a store and folder returns all messages
