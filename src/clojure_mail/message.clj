@@ -105,6 +105,12 @@
 (defn get-content [m]
   (.getContent m))
 
+(defn uid
+  "return the uid of the message"
+  [message]
+  (let [folder (.getFolder message)]
+    (.getUID folder message)))
+
 (defn message-headers
   "Returns all the headers from a message"
   [^MimeMessage msg]
