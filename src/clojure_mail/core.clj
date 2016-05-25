@@ -133,6 +133,11 @@
   [^IMAPStore s name]
   (.getFolder s name))
 
+(defn get-folder-uid-validity
+  "Return the Folder UIDValidity"
+  [folder]
+  (.getUIDValidity folder))
+
 (def sub-folder?
   "Check if a folder is a sub folder"
   (fn [folder]
@@ -210,11 +215,14 @@
 
 (defn all-messages
   "Given a store and folder returns all messages
-   reversed so the newest messages come first"
+   reversed so the newest messages come first. 
+  If since-uid is provided, return all messages with newer or equal uid"
   ([folder-name] (all-messages *store* folder-name))
-  ([^IMAPStore store folder-name]
+  ([^IMAPStore store folder-name & {:keys [since-uid]}]
    (let [folder (open-folder store folder-name :readonly)]
-     (->> (.getMessages folder)
+     (->> (if-not since-uid
+            (.getMessages folder)
+            (.getMessagesByUID folder since-uid javax.mail.UIDFolder/LASTUID))
           reverse))))
 
 (defn inbox
