@@ -1,6 +1,6 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm]
+  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (javax.mail FetchProfile FetchProfile$Item)))
 
@@ -77,8 +77,38 @@
   ([folder start end]
    (.getMessages folder start end)))
 
+(defn to-recipient-type 
+  [rt]
+  (cond 
+    :to javax.mail.Message$RecipientType/TO
+    :cc javax.mail.Message$RecipientType/CC
+    :bcc javax.mail.Message$RecipientType/BCC))
+
+(defn build-search-terms
+  "This creates a search condition. Input is a sequence of message part conditions or flags or header conditions.
+   Possible message part condititon is: (:from|:cc|:bcc|:to|:subject|:body) value or date condition.
+   Date condition is: (:received|:sent) (:after|:before|:on) date
+   Header condition is: :header (header-name-string header-value, ...)
+   Supported flags are: :answered?, :deleted?, :draft?, :recent?, :seen?.
+
+   Terms on the same level is connected with and-ed, if value is a sequence, then those values are or-ed. 
+    
+   Examples: 
+    (:body \"foo\" :body \"are\") - body should match both values.
+    (:body [\"foo\" \"are\"]) - body should match one of the values.
+    (:body \"foo\" :from \"john@exmaple.com\") - body should match foo and email is sent by john."
+  [& query]
+    (let [ft (first query)]
+      (case ft
+        :body (BodyTerm. (second query))
+        :from (FromStringTerm. (second query))
+        (:to :cc :bcc) (RecipientStringTerm. (to-recipient-type ft) (second query))
+        :subject (SubjectTerm. (second query)))))
+
 (defn search [f query]
-  (let [search-term (OrTerm. (SubjectTerm. query) (BodyTerm. query))]
+  (let [search-term (if (string? query)
+                      (OrTerm. (SubjectTerm. query) (BodyTerm. query))
+                      (build-search-terms query))]
     (.search f search-term)))
 
 (defn list
