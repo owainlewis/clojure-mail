@@ -12,10 +12,17 @@
       (is (= (type (second (.getTerms q))) javax.mail.search.BodyTerm))))
 
   (doall (map #(testing (str "message part condition " %)
-    (let [st (folder/build-search-terms % "query")]
+    (let [st (folder/build-search-terms (list % "query"))]
       (is (= (.getPattern st) "query")))) [:body :subject :from]))
 
   (doall (map #(testing (str "message part condition " %)
-    (let [st (folder/build-search-terms % "foo@example.com")]
+    (let [st (folder/build-search-terms (list % "foo@example.com"))]
       (is (= (.getRecipientType st) (folder/to-recipient-type %))) 
-      (is (= (.getPattern st) "foo@example.com")))) [:to :cc :bcc])))
+      (is (= (.getPattern st) "foo@example.com")))) [:to :cc :bcc]))
+
+  (testing "search value can be an array which is or-red"
+    (let [q (folder/search (reify FolderSearch (search [this st] st)) :body ["foo" "bar"])]
+      (is (= (type q) javax.mail.search.OrTerm))
+      (is (= (.getPattern (first (.getTerms q))) "foo"))
+      (is (= (.getPattern (second (.getTerms q))) "bar")))))
+

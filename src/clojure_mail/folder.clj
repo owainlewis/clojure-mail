@@ -97,17 +97,22 @@
     (:body \"foo\" :body \"are\") - body should match both values.
     (:body [\"foo\" \"are\"]) - body should match one of the values.
     (:body \"foo\" :from \"john@exmaple.com\") - body should match foo and email is sent by john."
-  [& query]
-    (let [ft (first query)]
+  [query]
+    (let [ft (first query)
+          inst (fn [a & params] (eval `(new ~a ~@params)))
+          or-term-builder (fn[cl params]
+                            (if (coll? params) 
+                              (OrTerm. (into-array (map #(inst cl %) params)))
+                              (inst cl params)))]
       (case ft
-        :body (BodyTerm. (second query))
-        :from (FromStringTerm. (second query))
+        :body (or-term-builder BodyTerm (second query))
+        :from (or-term-builder FromStringTerm (second query))
         (:to :cc :bcc) (RecipientStringTerm. (to-recipient-type ft) (second query))
-        :subject (SubjectTerm. (second query)))))
+        :subject (or-term-builder SubjectTerm (second query)))))
 
-(defn search [f query]
-  (let [search-term (if (string? query)
-                      (OrTerm. (SubjectTerm. query) (BodyTerm. query))
+(defn search [f & query]
+  (let [search-term (if (string? (first query))
+                      (OrTerm. (SubjectTerm. (first query)) (BodyTerm. (first query)))
                       (build-search-terms query))]
     (.search f search-term)))
 
