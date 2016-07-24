@@ -24,5 +24,15 @@
     (let [q (folder/search (reify FolderSearch (search [this st] st)) :body ["foo" "bar"])]
       (is (= (type q) javax.mail.search.OrTerm))
       (is (= (.getPattern (first (.getTerms q))) "foo"))
-      (is (= (.getPattern (second (.getTerms q))) "bar")))))
+      (is (= (.getPattern (second (.getTerms q))) "bar"))))
+
+  (testing "flag support"
+    (let [q (folder/search (reify FolderSearch (search [this st] st)) :answered?)]
+      (is (= (.getTestSet q) true))
+      (is (= (type q) javax.mail.search.FlagTerm)))
+    (let [q (folder/search (reify FolderSearch (search [this st] st)) :-answered?)]
+      (is (= (.getTestSet q) false)))))
+
+
+
 

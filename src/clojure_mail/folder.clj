@@ -1,6 +1,6 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm]
+  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (javax.mail FetchProfile FetchProfile$Item)))
 
@@ -84,12 +84,22 @@
     :cc javax.mail.Message$RecipientType/CC
     :bcc javax.mail.Message$RecipientType/BCC))
 
+(defn to-flag
+  [fl]
+  (cond 
+    (:-answered? :answered?) javax.mail.Flags$Flag/ANSWERED
+    (:-deleted? :deleted?) javax.mail.Flags$Flag/DELETED
+    (:flagged? :flagged) javax.mail.Flags$Flag/FLAGGED
+    (:-draft? :draft?) javax.mail.Flags$Flag/DRAFT
+    (:-recent? :recent?) javax.mail.Flags$Flag/RECENT
+    (:-seen? :seen?.) javax.mail.Flags$Flag/SEEN))
+
 (defn build-search-terms
   "This creates a search condition. Input is a sequence of message part conditions or flags or header conditions.
    Possible message part condititon is: (:from|:cc|:bcc|:to|:subject|:body) value or date condition.
    Date condition is: (:received|:sent) (:after|:before|:on) date
    Header condition is: :header (header-name-string header-value, ...)
-   Supported flags are: :answered?, :deleted?, :draft?, :recent?, :seen?.
+   Supported flags are: :answered?, :deleted?, :draft?, :recent?, :flagged? :seen?. Minus sign at the beginning of flag tests for negated flag value (ex. :-answered? not answered messages).
 
    Terms on the same level is connected with and-ed, if value is a sequence, then those values are or-ed. 
     
@@ -108,6 +118,8 @@
         :body (or-term-builder BodyTerm (second query))
         :from (or-term-builder FromStringTerm (second query))
         (:to :cc :bcc) (RecipientStringTerm. (to-recipient-type ft) (second query))
+        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (FlagTerm. (to-flag ft) true)
+        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (FlagTerm. (to-flag ft) false)
         :subject (or-term-builder SubjectTerm (second query)))))
 
 (defn search [f & query]
