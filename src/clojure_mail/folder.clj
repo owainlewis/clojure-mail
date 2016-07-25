@@ -1,8 +1,10 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm]
+  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
-           (javax.mail FetchProfile FetchProfile$Item)))
+           (java.text SimpleDateFormat)
+           (java.util Calendar)
+           (javax.mail FetchProfile FetchProfile$Item Flags)))
 
 ;; note that the get folder fn is part of the store namespace
 
@@ -78,15 +80,17 @@
    (.getMessages folder start end)))
 
 (defn to-recipient-type 
+  "Converts keyword to recipient type"
   [rt]
-  (cond 
+  (case rt
     :to javax.mail.Message$RecipientType/TO
     :cc javax.mail.Message$RecipientType/CC
     :bcc javax.mail.Message$RecipientType/BCC))
 
 (defn to-flag
+  "Converts a string to message flag"
   [fl]
-  (cond 
+  (case fl
     (:-answered? :answered?) javax.mail.Flags$Flag/ANSWERED
     (:-deleted? :deleted?) javax.mail.Flags$Flag/DELETED
     (:flagged? :flagged) javax.mail.Flags$Flag/FLAGGED
@@ -94,10 +98,35 @@
     (:-recent? :recent?) javax.mail.Flags$Flag/RECENT
     (:-seen? :seen?.) javax.mail.Flags$Flag/SEEN))
 
+(defn to-date-comparison
+  "Returns the correct comparison term for search"
+  [dt]
+  (cond 
+    (.contains (str dt) "-before") javax.mail.search.ComparisonTerm/LE
+    (.contains (str dt) "-after") javax.mail.search.ComparisonTerm/GE
+    (.contains (str dt) "-on") javax.mail.search.ComparisonTerm/EQ))
+
+(def date-formats ["yyyy-mm-dd" "yyyy.mm.dd" "yyyy-mm-dd hh:mm" "yyyy-mm-dd hh:mm:ss" "yyyy.mm.dd hh:mm" "yyyy.mm.dd hh:mm:ss"])
+
+(defn to-date
+  "Parses a date string to date"
+  [ds]
+    (cond 
+      (string? ds) (first (remove nil? (map #(try (.parse (SimpleDateFormat. %) ds) (catch Exception e nil)) date-formats))) 
+      (instance? java.util.Date ds) ds
+      (= ds :today) (.getTime (Calendar/getInstance))
+      (= ds :yesterday) (let [d (Calendar/getInstance)]
+                          (.add d Calendar/DAY_OF_MONTH -1)
+                          (.set d Calendar/HOUR_OF_DAY 0)
+                          (.set d Calendar/MINUTE 0)
+                          (.set d Calendar/SECOND 0)
+                          (.set d Calendar/MILLISECOND 0)
+                          (.getTime d))))
+
 (defn build-search-terms
   "This creates a search condition. Input is a sequence of message part conditions or flags or header conditions.
    Possible message part condititon is: (:from|:cc|:bcc|:to|:subject|:body) value or date condition.
-   Date condition is: (:received|:sent) (:after|:before|:on) date
+   Date condition is: (:received-before|:received-after|:received-on|:sent-before|:sent-after|:sent-on) date. 
    Header condition is: :header (header-name-string header-value, ...)
    Supported flags are: :answered?, :deleted?, :draft?, :recent?, :flagged? :seen?. Minus sign at the beginning of flag tests for negated flag value (ex. :-answered? not answered messages).
 
@@ -118,8 +147,10 @@
         :body (or-term-builder BodyTerm (second query))
         :from (or-term-builder FromStringTerm (second query))
         (:to :cc :bcc) (RecipientStringTerm. (to-recipient-type ft) (second query))
-        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (FlagTerm. (to-flag ft) true)
-        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (FlagTerm. (to-flag ft) false)
+        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (FlagTerm. (Flags. (to-flag ft)) true)
+        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (FlagTerm. (Flags. (to-flag ft)) false)
+        (:received-before :received-after :received-on) (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query)))
+        (:sent-before :sent-after :sent-on) (SentDateTerm. (to-date-comparison ft) (to-date (second query))) 
         :subject (or-term-builder SubjectTerm (second query)))))
 
 (defn search [f & query]
