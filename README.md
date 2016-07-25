@@ -110,6 +110,8 @@ You can easily search your inbox for messages
 ```clojure
 (def s (gen-store "user@gmail.com" "password"))
 (def results (search-inbox s "projects"))
+(def results (search-inbox s :body "projects" :received-before :yesterday))
+(def results (search-inbox s :body "projects" :from "john@example.com"))
 
 (->> results first subject) ;; => "Open Source Customisation Projects"
 ```
