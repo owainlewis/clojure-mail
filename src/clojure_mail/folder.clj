@@ -1,6 +1,6 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
+  (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm HeaderTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (java.text SimpleDateFormat)
            (java.util Calendar)
@@ -139,28 +139,42 @@
     (:body [\"foo\" \"bar\"]) - body should match one of the values.
     (:body \"foo\" :from \"john@exmaple.com\") - body should match foo and email is sent by john."
   ([query]
-   (build-search-terms query []))
-  ([query terms-so-far]
+   (build-search-terms query [] true))
+  ([query terms-so-far and-join]
     (let [ft (first query)
           inst (fn [a & params] (eval `(new ~a ~@params)))
-          or-term-builder (fn[cl params]
+          or-term-builder-1 (fn[cl params]
                             (if (coll? params)
                               (OrTerm. (into-array (map #(inst cl %) params)))
                               (inst cl params)))
-          rec-call (fn[skip-n term] (build-search-terms (nthnext query skip-n) (conj terms-so-far term)))]
+          or-term-builder-2 (fn[cl params]
+                              (if (= (count params) 2)
+                                (inst cl (first params) (second params))
+                                (OrTerm. (into-array (map (fn[[p1 p2]] (inst cl p1 p2)) (partition 2 params))))))
+          rec-call (fn[skip-n term] (build-search-terms (nthnext query skip-n) (conj terms-so-far term) and-join))]
       (case ft
-        :body (rec-call 2 (or-term-builder BodyTerm (second query)))
-        :from (rec-call 2 (or-term-builder FromStringTerm (second query)))
+        :body (rec-call 2 (or-term-builder-1 BodyTerm (second query)))
+        :from (rec-call 2 (or-term-builder-1 FromStringTerm (second query)))
         (:to :cc :bcc) (rec-call 2 (RecipientStringTerm. (to-recipient-type ft) (second query)))
         (:answered? :deleted? :draft? :recent? :seen? :flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) true))
         (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) false))
+        :header (if (coll? (second query)) 
+                  (rec-call 2 (or-term-builder-2 HeaderTerm (second query)))
+                  (rec-call 3 (or-term-builder-2 HeaderTerm [(second query) (nth query 2)])))
         (:received-before :received-after :received-on) (rec-call 2 (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query))))
         (:sent-before :sent-after :sent-on) (rec-call 2 (SentDateTerm. (to-date-comparison ft) (to-date (second query)))) 
-        :subject (rec-call 2 (or-term-builder SubjectTerm (second query)))
+        :subject (rec-call 2 (or-term-builder-1 SubjectTerm (second query)))
         nil (cond 
               (empty? terms-so-far) nil ; probably an error
               (= (count terms-so-far) 1) (first terms-so-far)
-              :else (AndTerm. (into-array SearchTerm terms-so-far)))))))
+              :else (if and-join 
+                      (AndTerm. (into-array SearchTerm terms-so-far))
+                      (OrTerm. (into-array SearchTerm terms-so-far))))
+        ; default case
+        (if (coll? ft)
+          (rec-call 1 (build-search-terms ft [] (not and-join)))
+          ; skip otherwise
+          (build-search-terms (next query) terms-so-far and-join))))))
 
 (defn search [f & query]
   (let [search-term (if (string? (first query))

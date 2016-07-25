@@ -59,6 +59,19 @@
       (is (= (.getPattern (first (.getTerms q))) "foo"))
       (is (= (type (second (.getTerms q))) javax.mail.search.ReceivedDateTerm))))
 
+  (testing "multiple criteria, vec is or-red"
+    (let [q (folder/search search-stub [:body "foo" :received-on :today])]
+      (is (= (type q) javax.mail.search.OrTerm))
+      (is (= (.getPattern (first (.getTerms q))) "foo"))
+      (is (= (type (second (.getTerms q))) javax.mail.search.ReceivedDateTerm))))
+
+  (testing "header support"
+    (let [q (folder/search search-stub :header "name" "value")]
+      (is (= (type q) javax.mail.search.HeaderTerm)))
+    (let [q (folder/search search-stub :header ["name1" "value1" "name2" "value2"])]
+      (is (= (type q) javax.mail.search.OrTerm))
+      (is (= (type (first (.getTerms q))) javax.mail.search.HeaderTerm))))
+
   (testing "flag support"
     (let [q (folder/search search-stub :answered?)]
       (is (= (.getTestSet q) true))
