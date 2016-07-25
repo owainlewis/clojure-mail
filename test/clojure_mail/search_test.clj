@@ -53,6 +53,12 @@
          (.add d java.util.Calendar/DAY_OF_WEEK -1)
          (is (= (h-day-of-week (.getDate q)) (.get d java.util.Calendar/DAY_OF_WEEK)))))
 
+  (testing "multiple criteria"
+    (let [q (folder/search search-stub :body "foo" :received-on :today)]
+      (is (= (type q) javax.mail.search.AndTerm))
+      (is (= (.getPattern (first (.getTerms q))) "foo"))
+      (is (= (type (second (.getTerms q))) javax.mail.search.ReceivedDateTerm))))
+
   (testing "flag support"
     (let [q (folder/search search-stub :answered?)]
       (is (= (.getTestSet q) true))

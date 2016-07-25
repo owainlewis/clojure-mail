@@ -1,6 +1,6 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
+  (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (java.text SimpleDateFormat)
            (java.util Calendar)
@@ -106,7 +106,7 @@
     (.contains (str dt) "-after") javax.mail.search.ComparisonTerm/GE
     (.contains (str dt) "-on") javax.mail.search.ComparisonTerm/EQ))
 
-(def date-formats ["yyyy-mm-dd" "yyyy.mm.dd" "yyyy-mm-dd hh:mm" "yyyy-mm-dd hh:mm:ss" "yyyy.mm.dd hh:mm" "yyyy.mm.dd hh:mm:ss"])
+(def date-formats ["yyyy-MM-dd" "yyyy.MM.dd"])
 
 (defn to-date
   "Parses a date string to date"
@@ -117,11 +117,13 @@
       (= ds :today) (.getTime (Calendar/getInstance))
       (= ds :yesterday) (let [d (Calendar/getInstance)]
                           (.add d Calendar/DAY_OF_MONTH -1)
-                          (.set d Calendar/HOUR_OF_DAY 0)
-                          (.set d Calendar/MINUTE 0)
-                          (.set d Calendar/SECOND 0)
-                          (.set d Calendar/MILLISECOND 0)
                           (.getTime d))))
+
+
+(defn- class-inst 
+  "Instantiates a java class with parameters"
+  [a & parameters] 
+  `(new ~a ~@parameters))
 
 (defn build-search-terms
   "This creates a search condition. Input is a sequence of message part conditions or flags or header conditions.
@@ -133,25 +135,32 @@
    Terms on the same level is connected with and-ed, if value is a sequence, then those values are or-ed. 
     
    Examples: 
-    (:body \"foo\" :body \"are\") - body should match both values.
-    (:body [\"foo\" \"are\"]) - body should match one of the values.
+    (:body \"foo\" :body \"bar\") - body should match both values.
+    (:body [\"foo\" \"bar\"]) - body should match one of the values.
     (:body \"foo\" :from \"john@exmaple.com\") - body should match foo and email is sent by john."
-  [query]
+  ([query]
+   (build-search-terms query []))
+  ([query terms-so-far]
     (let [ft (first query)
           inst (fn [a & params] (eval `(new ~a ~@params)))
           or-term-builder (fn[cl params]
-                            (if (coll? params) 
+                            (if (coll? params)
                               (OrTerm. (into-array (map #(inst cl %) params)))
-                              (inst cl params)))]
+                              (inst cl params)))
+          rec-call (fn[skip-n term] (build-search-terms (nthnext query skip-n) (conj terms-so-far term)))]
       (case ft
-        :body (or-term-builder BodyTerm (second query))
-        :from (or-term-builder FromStringTerm (second query))
-        (:to :cc :bcc) (RecipientStringTerm. (to-recipient-type ft) (second query))
-        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (FlagTerm. (Flags. (to-flag ft)) true)
-        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (FlagTerm. (Flags. (to-flag ft)) false)
-        (:received-before :received-after :received-on) (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query)))
-        (:sent-before :sent-after :sent-on) (SentDateTerm. (to-date-comparison ft) (to-date (second query))) 
-        :subject (or-term-builder SubjectTerm (second query)))))
+        :body (rec-call 2 (or-term-builder BodyTerm (second query)))
+        :from (rec-call 2 (or-term-builder FromStringTerm (second query)))
+        (:to :cc :bcc) (rec-call 2 (RecipientStringTerm. (to-recipient-type ft) (second query)))
+        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) true))
+        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) false))
+        (:received-before :received-after :received-on) (rec-call 2 (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query))))
+        (:sent-before :sent-after :sent-on) (rec-call 2 (SentDateTerm. (to-date-comparison ft) (to-date (second query)))) 
+        :subject (rec-call 2 (or-term-builder SubjectTerm (second query)))
+        nil (cond 
+              (empty? terms-so-far) nil ; probably an error
+              (= (count terms-so-far) 1) (first terms-so-far)
+              :else (AndTerm. (into-array SearchTerm terms-so-far)))))))
 
 (defn search [f & query]
   (let [search-term (if (string? (first query))
