@@ -54,7 +54,7 @@ You can also authenticate using an Oauth token.
 Now we can fetch email messages easily.
 
 ```clojure
-(def my-inbox-messages (take 5 (all-messages store :inbox)))
+(def my-inbox-messages (take 5 (all-messages store "inbox")))
 
 (def first-message (first my-inbox-messages))
 
