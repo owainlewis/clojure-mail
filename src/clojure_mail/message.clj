@@ -1,7 +1,7 @@
 (ns clojure-mail.message
   (:require [medley.core :refer [filter-keys]])
   (:import [javax.mail.internet InternetAddress MimeMultipart MimeMessage]
-           [javax.mail Message$RecipientType]))
+           [javax.mail Message$RecipientType Flags Flags$Flag]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
@@ -188,3 +188,8 @@
               (filter-keys (set fields) fields-map)
               fields-map)]
     (reduce-kv (partial add-field msg) {} kvs)))
+
+(defn mark-read
+  "Set SEEN flag on a message"
+  [msg]
+  (.setFlags msg (Flags. Flags$Flag/SEEN) true))
