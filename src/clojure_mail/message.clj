@@ -11,8 +11,10 @@
          (first (clojure.string/split type #"[;]")))]
     (condp = infered-type
       "multipart/alternative" :multipart
+      "multipart/mixed" :multipart
       "text/html" :html
-      "text/plain" :plain)))
+      "text/plain" :plain
+      nil)))
 
 (defn imap-address->map
   [^InternetAddress address]
