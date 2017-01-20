@@ -184,7 +184,7 @@
   "Find unread messages"
   ([folder-name] (unread-messages *store* folder-name))
   ([^IMAPStore store folder-name]
-   (let [folder (open-folder store folder-name :readonly)]
+   (let [folder (open-folder store folder-name :readwrite)]
      (.search folder
               (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))
 
