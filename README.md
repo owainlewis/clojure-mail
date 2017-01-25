@@ -135,7 +135,7 @@ do any machine learning type processing on email messages.
 
 Some IMAP servers allow the use of the IDLE command to receive push notifications when a folder changes.
 
-```clj
+```clojure
 (require '[clojure-mail.events :as events])
 
 ;; Create a manager and start listening to the inbox, printing the subject of new messages
@@ -165,12 +165,12 @@ Some IMAP servers allow the use of the IDLE command to receive push notification
 
 ## Reading emails from disk
 
-Clojure mail can be used to parse existing email messages from file. Take a look in test/fixtures to see some example messages. To read one of these messages we can do something like this
+Clojure mail can be used to parse existing email messages from file. Take a look in dev-resources/emails to see some example messages. To read one of these messages we can do something like this
 
 
 ```clojure
 
-(def message (read-mail-from-file "test/clojure_mail/fixtures/25"))
+(def message (file->message "test/clojure_mail/fixtures/25"))
 
 (read-message message)
 
