@@ -6,7 +6,7 @@
            (java.util Calendar)
            (javax.mail FetchProfile FetchProfile$Item Flags)))
 
-;; note that the get folder fn is part of the store namespace
+;; Note that the get folder fn is part of the store namespace
 
 (def ^:dynamic current-folder)
 
@@ -118,7 +118,6 @@
       (= ds :yesterday) (let [d (Calendar/getInstance)]
                           (.add d Calendar/DAY_OF_MONTH -1)
                           (.getTime d))))
-
 
 (defn- class-inst 
   "Instantiates a java class with parameters"
