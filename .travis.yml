@@ -1,3 +1,2 @@
 language: clojure
 script: lein test
-lein: lein2
