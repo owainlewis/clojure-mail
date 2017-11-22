@@ -41,11 +41,9 @@
    be used to read saved messages from text files
    and for parsing fixtures in tests etc"
   [path-to-message]
-  (let [props (Session/getDefaultInstance (Properties.))
-        ;; removed File since FileInputStream is able
-        ;; to work from File or String (path)
-        msg (FileInputStream. path-to-message)]
-    (MimeMessage. props msg)))
+  (let [props (Session/getDefaultInstance (Properties.))]
+    (with-open [msg (FileInputStream. path-to-message)]
+      (MimeMessage. props msg))))
 
 (defn get-session
   [protocol]
