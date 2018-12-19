@@ -93,10 +93,10 @@
   (case fl
     (:-answered? :answered?) javax.mail.Flags$Flag/ANSWERED
     (:-deleted? :deleted?) javax.mail.Flags$Flag/DELETED
-    (:flagged? :flagged) javax.mail.Flags$Flag/FLAGGED
+    (:-flagged? :flagged?) javax.mail.Flags$Flag/FLAGGED
     (:-draft? :draft?) javax.mail.Flags$Flag/DRAFT
     (:-recent? :recent?) javax.mail.Flags$Flag/RECENT
-    (:-seen? :seen?.) javax.mail.Flags$Flag/SEEN))
+    (:-seen? :seen?) javax.mail.Flags$Flag/SEEN))
 
 (defn to-date-comparison
   "Returns the correct comparison term for search"
