@@ -73,11 +73,16 @@
       (is (= (type (first (.getTerms q))) javax.mail.search.HeaderTerm))))
 
   (testing "flag support"
-    (let [q (folder/search search-stub :answered?)]
-      (is (= (.getTestSet q) true))
-      (is (= (type q) javax.mail.search.FlagTerm)))
-    (let [q (folder/search search-stub :-seen?)]
-      (is (= (.getTestSet q) false)))))
+    (are [flag set?] 
+        (let [q (folder/search search-stub flag)]
+          (is (= set? (.getTestSet q)))
+          (is (= javax.mail.search.FlagTerm (type q))))
+      :answered? true :-answered? false
+      :deleted?  true :-deleted?  false
+      :flagged?  true :-flagged?  false
+      :draft?    true :-draft?    false
+      :recent?   true :-recent?   false
+      :seen?     true :-seen?     false)))
 
 
 

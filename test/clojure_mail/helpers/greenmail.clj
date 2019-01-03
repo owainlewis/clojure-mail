@@ -28,7 +28,7 @@
   * :server [:imap|:imaps|:all-imap]. Default: :imap
   * :start true|false. Starts the server after creating it. Default false.
   "
-  [& {:keys [server start] :or {server :imap false :start} :as options}]
+  [& {:keys [server start] :or {server :imap start false} :as options}]
   (let [gm (case server
              :imap (GreenMail. ServerSetupTest/IMAP)
              :imaps (GreenMail. ServerSetupTest/IMAPS)
