@@ -91,6 +91,18 @@
   [message]
   (has-flag? message "ANSWERED"))
 
+(defn deleted?
+  [message]
+  (has-flag? message "DELETED"))
+
+(defn draft?
+  [message]
+  (has-flag? message "DRAFT"))
+
+(defn flagged?
+  [message]
+  (has-flag? message "FLAGGED"))
+
 (defn recent?
   [message]
   (has-flag? message "RECENT"))
@@ -191,7 +203,37 @@
               fields-map)]
     (reduce-kv (partial add-field msg) {} kvs)))
 
+(defn- set-flag
+  "Sets a flag on a message"
+  [msg flag]
+  (.setFlags msg flag true))
+
 (defn mark-read
   "Set SEEN flag on a message"
   [msg]
-  (.setFlags msg (Flags. Flags$Flag/SEEN) true))
+  (set-flag msg (Flags. Flags$Flag/SEEN)))
+
+(defn mark-deleted
+  "Set DELETED flag on a message"
+  [msg]
+  (set-flag msg (Flags. Flags$Flag/DELETED)))
+
+(defn mark-answered
+  "Set ANSWERED flag on a message"
+  [msg]
+  (set-flag msg (Flags. Flags$Flag/ANSWERED)))
+
+(defn mark-flagged
+  "Set FLAGGED flag on a message"
+  [msg]
+  (set-flag msg (Flags. Flags$Flag/FLAGGED)))
+
+(defn mark-as-flagged
+  "Set DRAFT flag on a message"
+  [msg]
+  (set-flag msg (Flags. Flags$Flag/DRAFT)))
+
+(defn mark-recent
+  "Set RECENT flag on a message"
+  [msg]
+  (set-flag msg (Flags. Flags$Flag/RECENT)))
