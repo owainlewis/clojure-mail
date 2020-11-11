@@ -1,7 +1,7 @@
 (ns clojure-mail.parser
   (:import [org.jsoup.nodes Document Element]))
 
-(defn parse [html]
+(defn parse [^String html]
   (org.jsoup.Jsoup/parse html "UTF-8"))
 
 (defn html->text

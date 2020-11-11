@@ -32,7 +32,7 @@
   (let [gm (case server
              :imap (GreenMail. ServerSetupTest/IMAP)
              :imaps (GreenMail. ServerSetupTest/IMAPS)
-             :all-imap (GreenMail. [ServerSetupTest/IMAP ServerSetupTest/IMAPS]))]
+             :all-imap (GreenMail.))]
     (if start
       (start-greenmail! gm)
       gm)))

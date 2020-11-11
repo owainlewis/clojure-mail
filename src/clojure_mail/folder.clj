@@ -1,10 +1,10 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
-  (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm HeaderTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm]
+  (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm HeaderTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm ComparisonTerm]
            (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
            (java.text SimpleDateFormat)
            (java.util Calendar)
-           (javax.mail FetchProfile FetchProfile$Item Flags)))
+           (javax.mail FetchProfile FetchProfile$Item Flags Flags$Flag Message$RecipientType)))
 
 ;; Note that the get folder fn is part of the store namespace
 
@@ -83,28 +83,28 @@
   "Converts keyword to recipient type"
   [rt]
   (case rt
-    :to javax.mail.Message$RecipientType/TO
-    :cc javax.mail.Message$RecipientType/CC
-    :bcc javax.mail.Message$RecipientType/BCC))
+    :to Message$RecipientType/TO
+    :cc Message$RecipientType/CC
+    :bcc Message$RecipientType/BCC))
 
 (defn to-flag
   "Converts a string to message flag"
   [fl]
   (case fl
-    (:-answered? :answered?) javax.mail.Flags$Flag/ANSWERED
-    (:-deleted? :deleted?) javax.mail.Flags$Flag/DELETED
-    (:-flagged? :flagged?) javax.mail.Flags$Flag/FLAGGED
-    (:-draft? :draft?) javax.mail.Flags$Flag/DRAFT
-    (:-recent? :recent?) javax.mail.Flags$Flag/RECENT
-    (:-seen? :seen?) javax.mail.Flags$Flag/SEEN))
+    (:-answered? :answered?) Flags$Flag/ANSWERED
+    (:-deleted? :deleted?) Flags$Flag/DELETED
+    (:-flagged? :flagged?) Flags$Flag/FLAGGED
+    (:-draft? :draft?) Flags$Flag/DRAFT
+    (:-recent? :recent?) Flags$Flag/RECENT
+    (:-seen? :seen?) Flags$Flag/SEEN))
 
 (defn to-date-comparison
   "Returns the correct comparison term for search"
   [dt]
-  (cond 
-    (.contains (str dt) "-before") javax.mail.search.ComparisonTerm/LE
-    (.contains (str dt) "-after") javax.mail.search.ComparisonTerm/GE
-    (.contains (str dt) "-on") javax.mail.search.ComparisonTerm/EQ))
+  (cond
+    (.contains (str dt) "-before") ComparisonTerm/LE
+    (.contains (str dt) "-after") ComparisonTerm/GE
+    (.contains (str dt) "-on") ComparisonTerm/EQ))
 
 (def date-formats ["yyyy-MM-dd" "yyyy.MM.dd"])
 
