@@ -33,9 +33,9 @@
   ;; in the IMAP server
   ;; TODO Investigate GreenMail e-mail thread and enable test
   #_(testing "A javax.mail.AuthenticationFailedException is thrown if credentials are not correct."
-    (let [port (fxt/get-server-port :imap)]
-      (is (thrown? AuthenticationFailedException
-                   (store "imap" ["localhost" port] "user1" "bad-password"))))))
+      (let [port (fxt/get-server-port :imap)]
+        (is (thrown? AuthenticationFailedException
+                     (store "imap" ["localhost" port] "user1" "bad-password"))))))
 
 (deftest multiple-store-test
   (testing "Multiple stores running at the same time identify themselves as connected."
@@ -88,7 +88,7 @@
         (is (not (message/read? sut)))
         (close-store test-store)))
     #_(testing "A message that has being retrieved before is marked as read."
-      (let [test-store (apply store "imap" ["localhost" port] credentials)
-            sut (first (all-messages test-store "inbox"))]
-        (is (message/read? sut))
-        (close-store test-store)))))
+        (let [test-store (apply store "imap" ["localhost" port] credentials)
+              sut (first (all-messages test-store "inbox"))]
+          (is (message/read? sut))
+          (close-store test-store)))))

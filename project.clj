@@ -9,5 +9,5 @@
                  [medley "1.3.0"]]
   :deploy-repositories [["releases" {:url "https://clojars.org/repo"
                                      :creds :gpg}]]
-  :plugins [[lein-cljfmt "0.3.0"]]
+  :plugins [[lein-cljfmt "0.7.0"]]
   :profiles {:dev {:dependencies [[com.icegreen/greenmail "1.6.1"]]}})

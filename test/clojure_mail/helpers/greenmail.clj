@@ -5,7 +5,6 @@
            [javax.mail.internet InternetAddress MimeMessage MimeMessage$RecipientType]
            (java.util Properties)))
 
-
 (defn start-greenmail!
   "starts an already existing GreenMail instance."
   [gm]
@@ -113,13 +112,13 @@
   user (identified by the `to` parameter in the `gm` GreenMail instance. No
   SMTP is used. This message will end in the user's INBOX folder."
   ([gm from to subject body]
-  (let [usr (get-greenmail-user-by-email gm to)
-        msg (make-direct-text-message from to subject body)]
-    (.deliver usr msg)))
+   (let [usr (get-greenmail-user-by-email gm to)
+         msg (make-direct-text-message from to subject body)]
+     (.deliver usr msg)))
   ([gm msg-map]
    (deliver-direct-text-message!
-     gm
-     (:from msg-map)
-     (:to msg-map)
-     (:subject msg-map)
-     (:body msg-map))))
+    gm
+    (:from msg-map)
+    (:to msg-map)
+    (:subject msg-map)
+    (:body msg-map))))
