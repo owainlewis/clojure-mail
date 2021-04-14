@@ -146,7 +146,7 @@ Some IMAP servers allow the use of the IDLE command to receive push notification
         gstore (store "imaps" s "imap.gmail.com" "me@gmail.com" "mypassword")
         folder (open-folder gstore "inbox" :readonly)
         im (events/new-idle-manager s)]
-    (add-message-count-listener (fn [e]
+    (events/add-message-count-listener (fn [e]
                                   (prn "added" (->> e
                                                     :messages
                                                     (map read-message)
