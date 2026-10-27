@@ -7,8 +7,8 @@
         :url "https://github.com/owainlewis/clojure-mail"}
   :min-lein-version "2.9.0"
   :dependencies [[org.clojure/clojure "1.11.4"]
-                 [org.jsoup/jsoup "1.21.2"] ;; for cleaning up messy html messages
-                 [com.sun.mail/jakarta.mail "1.6.7"]]
+                 [org.jsoup/jsoup "1.23.2"] ;; for cleaning up messy html messages
+                 [com.sun.mail/jakarta.mail "1.6.8"]]
   :global-vars {*warn-on-reflection* true}
   :deploy-repositories [["clojars" {:url "https://repo.clojars.org"
                                     :username :env/clojars_username

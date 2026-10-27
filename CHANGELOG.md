@@ -24,7 +24,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Changed
 
 - Search terms are built directly instead of through `eval`.
-- Dependencies: Clojure 1.11.4, jsoup 1.21.2, Jakarta Mail 1.6.7. Dropped the `medley` dependency.
+- Dependencies: Clojure 1.11.4, jsoup 1.23.2, Jakarta Mail 1.6.8. Both updates fix known vulnerabilities (GHSA-9342-92gg-6v29, GHSA-65r4-943x-97jj, GHSA-pmhh-3w7g-xqp8). Dropped the `medley` dependency.
 - README rewritten with Gmail app password and OAuth guidance.
 - Project URL now points at `github.com/owainlewis/clojure-mail`.
 

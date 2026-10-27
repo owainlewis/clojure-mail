@@ -62,12 +62,12 @@
   [f ms & {:keys [fetch-profile] :or {fetch-profile :message}}]
   (let [fp (FetchProfile.)
         ^FetchProfile$Item item (condp = fetch-profile
-               :message IMAPFolder$FetchProfileItem/MESSAGE
-               :headers IMAPFolder$FetchProfileItem/HEADERS
-               :flags IMAPFolder$FetchProfileItem/FLAGS
-               :envelope IMAPFolder$FetchProfileItem/ENVELOPE
-               :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
-               :size FetchProfile$Item/SIZE)
+                                  :message IMAPFolder$FetchProfileItem/MESSAGE
+                                  :headers IMAPFolder$FetchProfileItem/HEADERS
+                                  :flags IMAPFolder$FetchProfileItem/FLAGS
+                                  :envelope IMAPFolder$FetchProfileItem/ENVELOPE
+                                  :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
+                                  :size FetchProfile$Item/SIZE)
         _ (.add fp item)]
     (.fetch ^javax.mail.Folder f ^"[Ljavax.mail.Message;" (into-array javax.mail.Message ms) fp)))
 
