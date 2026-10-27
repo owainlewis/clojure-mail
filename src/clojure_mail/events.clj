@@ -1,6 +1,7 @@
 (ns clojure-mail.events
   (:require [clojure-mail.message :refer [read-message]])
   (:import (com.sun.mail.imap IdleManager)
+           (javax.mail Folder Session)
            (java.util.concurrent Executors)
            (javax.mail.event MessageCountEvent MessageCountListener)))
 
@@ -29,7 +30,7 @@
   folder - the folder you want to add the listener to, this folder must have been opened
   idle-manager - an idle manager, the idle manager should be stopped when you no longer wish to watch the folder
   An event is a map {:messages [javax.mail.Message] :type :added|:removed}"
-  [message-added message-removed folder idle-manager]
+  [message-added message-removed ^javax.mail.Folder folder ^IdleManager idle-manager]
   (.addMessageCountListener folder
                             (message-count-listener (comp message-added event->map)
                                                     (comp message-removed event->map)
@@ -38,7 +39,7 @@
 
 (defn new-idle-manager
   "An idle manager is required to add a message count listener to a folder"
-  [session]
+  [^Session session]
   (let [es (Executors/newCachedThreadPool)]
     (IdleManager. session es)))
 

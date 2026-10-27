@@ -87,8 +87,26 @@
             sut (first (all-messages test-store "inbox"))]
         (is (not (message/read? sut)))
         (close-store test-store)))
-    #_(testing "A message that has being retrieved before is marked as read."
-        (let [test-store (apply store "imap" ["localhost" port] credentials)
-              sut (first (all-messages test-store "inbox"))]
-          (is (message/read? sut))
-          (close-store test-store)))))
+    (testing "A message marked as read is reported as read."
+      (let [test-store (apply store "imap" ["localhost" port] credentials)
+            folder (open-folder test-store "inbox" :readwrite)
+            sut (first (.getMessages ^javax.mail.Folder folder))]
+        (message/mark-read sut)
+        (is (message/read? sut))
+        (close-store test-store)))))
+
+(deftest message-count-closes-folder-test
+  (testing "message-count does not leave the folder open"
+    (let [port (fxt/get-server-port :imap)
+          test-store (store "imap" ["localhost" port] "user1" "password1")]
+      (is (= 2 (message-count test-store "inbox")))
+      (is (not (.isOpen ^javax.mail.Folder (get-folder test-store "inbox"))))
+      (close-store test-store))))
+
+(deftest search-inbox-test
+  (testing "search-inbox finds messages by subject"
+    (let [port (fxt/get-server-port :imap)
+          test-store (store "imap" ["localhost" port] "user1" "password1")]
+      (is (= ["Another e-mail from user2"]
+             (map message/subject (search-inbox test-store :subject "Another"))))
+      (close-store test-store))))
