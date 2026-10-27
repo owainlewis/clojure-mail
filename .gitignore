@@ -15,3 +15,6 @@ pom.xml
 .idea/
 /projectFilesBackup
 .lein-repl-history
+.clj-kondo/.cache
+.cpcache
+.lsp

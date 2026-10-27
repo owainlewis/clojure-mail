@@ -11,38 +11,38 @@
 (def ^:dynamic current-folder)
 
 (defmacro with-folder [folder store & body]
-  `(let [fd# (doto (.getFolder ~store ~folder) (.open IMAPFolder/READ_ONLY))]
+  `(let [fd# (doto (.getFolder ~(vary-meta store assoc :tag `javax.mail.Store) ~folder) (.open IMAPFolder/READ_ONLY))]
      (binding [current-folder fd#]
        (do ~@body))))
 
 (defn get-folder
   "Returns an IMAPFolder instance"
-  [store folder-name]
+  [^javax.mail.Store store ^String folder-name]
   (.getFolder store folder-name))
 
-(defn full-name [f]
+(defn full-name [^javax.mail.Folder f]
   (.getFullName f))
 
 (defn new-message-count
   "Get number of new messages in folder f"
-  [f]
+  [^javax.mail.Folder f]
   (.getNewMessageCount f))
 
 (defn message-count
   "Get total number of messages in folder f"
-  [f]
+  [^javax.mail.Folder f]
   (.getMessageCount f))
 
 (defn unread-message-count
   "Get number of unread messages in folder f"
-  [f]
+  [^javax.mail.Folder f]
   (.getUnreadMessageCount f))
 
-(defn get-message-by-uid [f id]
-  (.getMessageByUID f id))
+(defn get-message-by-uid [^javax.mail.UIDFolder f id]
+  (.getMessageByUID f (long id)))
 
-(defn get-message [f id]
-  (.getMessage f id))
+(defn get-message [^javax.mail.Folder f id]
+  (.getMessage f (int id)))
 
 (defn fetch-messages
   "Pre-fetch message attributes for a given fetch profile.
@@ -61,23 +61,23 @@
       "
   [f ms & {:keys [fetch-profile] :or {fetch-profile :message}}]
   (let [fp (FetchProfile.)
-        item (condp = fetch-profile
-               :message IMAPFolder$FetchProfileItem/MESSAGE
-               :headers IMAPFolder$FetchProfileItem/HEADERS
-               :flags IMAPFolder$FetchProfileItem/FLAGS
-               :envelope IMAPFolder$FetchProfileItem/ENVELOPE
-               :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
-               :size FetchProfile$Item/SIZE)
+        ^FetchProfile$Item item (condp = fetch-profile
+                                  :message IMAPFolder$FetchProfileItem/MESSAGE
+                                  :headers IMAPFolder$FetchProfileItem/HEADERS
+                                  :flags IMAPFolder$FetchProfileItem/FLAGS
+                                  :envelope IMAPFolder$FetchProfileItem/ENVELOPE
+                                  :content-info IMAPFolder$FetchProfileItem/CONTENT_INFO
+                                  :size FetchProfile$Item/SIZE)
         _ (.add fp item)]
-    (.fetch f (into-array IMAPMessage ms) fp)))
+    (.fetch ^javax.mail.Folder f ^"[Ljavax.mail.Message;" (into-array javax.mail.Message ms) fp)))
 
 (defn get-messages
   "Gets all messages from folder f or get the Message objects for message numbers ranging from start through end,
   both start and end inclusive. Note that message numbers start at 1, not 0."
-  ([folder]
+  ([^javax.mail.Folder folder]
    (.getMessages folder))
-  ([folder start end]
-   (.getMessages folder start end)))
+  ([^javax.mail.Folder folder start end]
+   (.getMessages folder (int start) (int end))))
 
 (defn to-recipient-type
   "Converts keyword to recipient type"
@@ -119,11 +119,6 @@
                         (.add d Calendar/DAY_OF_MONTH -1)
                         (.getTime d))))
 
-(defn- class-inst
-  "Instantiates a java class with parameters"
-  [a & parameters]
-  `(new ~a ~@parameters))
-
 (defn build-search-terms
   "This creates a search condition. Input is a sequence of message part conditions or flags or header conditions.
    Possible message part condititon is: (:from|:cc|:bcc|:to|:subject|:body) value or date condition.
@@ -141,28 +136,27 @@
    (build-search-terms query [] true))
   ([query terms-so-far and-join]
    (let [ft (first query)
-         inst (fn [a & params] (eval `(new ~a ~@params)))
-         or-term-builder-1 (fn [cl params]
+         or-term-builder-1 (fn [ctor params]
                              (if (coll? params)
-                               (OrTerm. (into-array (map #(inst cl %) params)))
-                               (inst cl params)))
-         or-term-builder-2 (fn [cl params]
+                               (OrTerm. ^"[Ljavax.mail.search.SearchTerm;" (into-array SearchTerm (map ctor params)))
+                               (ctor params)))
+         or-term-builder-2 (fn [ctor params]
                              (if (= (count params) 2)
-                               (inst cl (first params) (second params))
-                               (OrTerm. (into-array (map (fn [[p1 p2]] (inst cl p1 p2)) (partition 2 params))))))
+                               (ctor (first params) (second params))
+                               (OrTerm. ^"[Ljavax.mail.search.SearchTerm;" (into-array SearchTerm (map (fn [[p1 p2]] (ctor p1 p2)) (partition 2 params))))))
          rec-call (fn [skip-n term] (build-search-terms (nthnext query skip-n) (conj terms-so-far term) and-join))]
      (case ft
-       :body (rec-call 2 (or-term-builder-1 BodyTerm (second query)))
-       :from (rec-call 2 (or-term-builder-1 FromStringTerm (second query)))
+       :body (rec-call 2 (or-term-builder-1 #(BodyTerm. ^String %) (second query)))
+       :from (rec-call 2 (or-term-builder-1 #(FromStringTerm. ^String %) (second query)))
        (:to :cc :bcc) (rec-call 2 (RecipientStringTerm. (to-recipient-type ft) (second query)))
-       (:answered? :deleted? :draft? :recent? :seen? :flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) true))
-       (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (rec-call 1 (FlagTerm. (Flags. (to-flag ft)) false))
+       (:answered? :deleted? :draft? :recent? :seen? :flagged?) (rec-call 1 (FlagTerm. (Flags. ^Flags$Flag (to-flag ft)) true))
+       (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (rec-call 1 (FlagTerm. (Flags. ^Flags$Flag (to-flag ft)) false))
        :header (if (coll? (second query))
-                 (rec-call 2 (or-term-builder-2 HeaderTerm (second query)))
-                 (rec-call 3 (or-term-builder-2 HeaderTerm [(second query) (nth query 2)])))
+                 (rec-call 2 (or-term-builder-2 #(HeaderTerm. ^String %1 ^String %2) (second query)))
+                 (rec-call 3 (or-term-builder-2 #(HeaderTerm. ^String %1 ^String %2) [(second query) (nth query 2)])))
        (:received-before :received-after :received-on) (rec-call 2 (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query))))
        (:sent-before :sent-after :sent-on) (rec-call 2 (SentDateTerm. (to-date-comparison ft) (to-date (second query))))
-       :subject (rec-call 2 (or-term-builder-1 SubjectTerm (second query)))
+       :subject (rec-call 2 (or-term-builder-1 #(SubjectTerm. ^String %) (second query)))
        nil (cond
              (empty? terms-so-far) nil ; probably an error
              (= (count terms-so-far) 1) (first terms-so-far)
@@ -175,13 +169,18 @@
           ; skip otherwise
          (build-search-terms (next query) terms-so-far and-join))))))
 
-(defn search [f & query]
+(defn search
+  "Search folder f. With a single string, matches subject or body.
+   Otherwise `query` is a sequence of conditions; see `build-search-terms`."
+  [f & query]
   (let [search-term (if (string? (first query))
                       (OrTerm. (SubjectTerm. (first query)) (BodyTerm. (first query)))
                       (build-search-terms query))]
-    (.search f search-term)))
+    (if (instance? javax.mail.Folder f)
+      (.search ^javax.mail.Folder f ^SearchTerm search-term)
+      (clojure.lang.Reflector/invokeInstanceMethod f "search" (object-array [search-term])))))
 
 (defn list
   "List all folders under folder f"
-  [f]
+  [^javax.mail.Folder f]
   (.list f))

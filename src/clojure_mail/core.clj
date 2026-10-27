@@ -1,17 +1,17 @@
 (ns clojure-mail.core
-  (:require [clojure-mail.parser :refer [html->text]]
-            [clojure-mail.message :as message]
-            [clojure-mail.message :refer [read-message]]
+  (:require [clojure-mail.message :as message]
             [clojure-mail.folder :as folder])
   (:import [java.util Properties]
            [javax.mail.search FlagTerm]
-           [java.io FileInputStream File]
+           [java.io FileInputStream FileOutputStream]
            [javax.mail.internet MimeMessage]
-           [javax.mail Session
+           [javax.mail Message
+            Session
+            Store
             Folder
             Flags
-            Flags$Flag AuthenticationFailedException]
-           (com.sun.mail.imap IMAPStore)))
+            Flags$Flag
+            UIDFolder]))
 
 (defonce ^:dynamic *store* nil)
 
@@ -41,9 +41,9 @@
    be used to read saved messages from text files
    and for parsing fixtures in tests etc"
   [path-to-message]
-  (let [props (Session/getDefaultInstance (Properties.))]
-    (with-open [msg (FileInputStream. path-to-message)]
-      (MimeMessage. props msg))))
+  (let [session (Session/getDefaultInstance (Properties.))]
+    (with-open [msg (FileInputStream. (str path-to-message))]
+      (MimeMessage. session msg))))
 
 (defn get-session
   [protocol]
@@ -92,8 +92,8 @@
      (store protocol session server email pass)))
   ([protocol session server email pass]
    (let [[target-host target-port] (server->host-port protocol server)]
-     (doto (.getStore session protocol)
-       (.connect ^String target-host ^int target-port ^String email ^String pass)))))
+     (doto (.getStore ^Session session ^String protocol)
+       (.connect ^String target-host (int target-port) ^String email ^String pass)))))
 
 (defn xoauth2-store
   ([server email oauth-token]
@@ -107,51 +107,49 @@
              (format "mail.%s.auth.mechanisms" protocol)    "XOAUTH2"
              (format "mail.%s.usesocketchannels" protocol)  true})
          session (Session/getInstance p)]
-     (doto (.getStore session protocol)
-       (.connect server, email, oauth-token)))))
+     (doto (.getStore session ^String protocol)
+       (.connect ^String server ^String email ^String oauth-token)))))
 
 (defn connected?
   "Returns true if a connection is established"
-  [^IMAPStore s]
+  [^Store s]
   (.isConnected s))
 
 (defn close-store
   "Close an open IMAP store connection"
-  [s]
+  [^Store s]
   (.close s))
 
 (defn get-default-folder
-  ^{:doc "Returns a Folder object that represents the 'root' of the default
-          namespace presented to the user by the Store."}
-  [^IMAPStore s]
+  "Returns a Folder object that represents the 'root' of the default
+   namespace presented to the user by the Store."
+  [^Store s]
   (.getDefaultFolder s))
 
 (defn get-folder
   "Return the Folder object corresponding to the given name."
-  [^IMAPStore s name]
+  [^Store s ^String name]
   (.getFolder s name))
 
 (defn get-folder-uid-validity
   "Return the Folder UIDValidity"
-  [folder]
+  [^UIDFolder folder]
   (.getUIDValidity folder))
 
-(def sub-folder?
-  "Check if a folder is a sub folder"
-  (fn [folder]
-    (if (= 0 (bit-and
-              (.getType folder) Folder/HOLDS_FOLDERS))
-      false
-      true)))
+(defn sub-folder?
+  "Check if a folder can hold other folders"
+  [^Folder folder]
+  (not (zero? (bit-and (.getType folder) Folder/HOLDS_FOLDERS))))
 
 (defn folders
   "Returns a seq of all IMAP folders inlcuding sub folders"
-  ([store] (folders store (.getDefaultFolder store)))
-  ([store f]
+  ([^Store store] (folders store (.getDefaultFolder store)))
+  ([store ^Folder f]
    (map
-    #(cons (.getName %)
-           (if (sub-folder? %)
-             (folders store %)))
+    (fn [^Folder sub]
+      (cons (.getName sub)
+            (when (sub-folder? sub)
+              (folders store sub))))
     (.list f))))
 
 (def folder-permissions
@@ -163,45 +161,49 @@
   A folder-name is string (usually a label name)"
   ([folder-name perm-level] (open-folder *store* folder-name perm-level))
   ([store folder-name perm-level]
-   (let [found-folder (get-folder store folder-name)]
-     (.open found-folder (get folder-permissions perm-level))
+   (let [^Folder found-folder (get-folder store folder-name)]
+     (.open found-folder (int (get folder-permissions perm-level)))
      found-folder)))
 
 (defn message-count
   "Returns the number of messages in a folder"
   ([folder-name] (message-count *store* folder-name))
   ([store folder-name]
-   (let [folder (open-folder store folder-name :readonly)]
-     (.getMessageCount folder))))
+   (let [^Folder folder (open-folder store folder-name :readonly)]
+     (try
+       (.getMessageCount folder)
+       (finally
+         (.close folder false))))))
 
 (defn user-flags [message]
-  (let [flags (message/flags message)]
+  (let [^Flags flags (message/flags message)]
     (.getUserFlags flags)))
 
 (defn unread-messages
   "Find unread messages"
   ([folder-name] (unread-messages *store* folder-name))
-  ([^IMAPStore store folder-name]
-   (let [folder (open-folder store folder-name :readwrite)]
+  ([store folder-name]
+   (let [^Folder folder (open-folder store folder-name :readwrite)]
      (.search folder
               (FlagTerm. (Flags. Flags$Flag/SEEN) false)))))
 
 (defn mark-all-read
   "Mark all messages in folder as read"
   ([folder-name] (mark-all-read *store* folder-name))
-  ([^IMAPStore store folder-name]
-   (let [folder (open-folder store folder-name :readwrite)
+  ([store folder-name]
+   (let [^Folder folder (open-folder store folder-name :readwrite)
          messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-     (dorun (map #(.setFlags % (Flags. Flags$Flag/SEEN) true) messages)))))
+     (doseq [^Message m messages]
+       (.setFlags m (Flags. Flags$Flag/SEEN) true)))))
 
 (defn save-message-to-file
-  [message]
-  (let [filename
-        (apply str
-               (drop 1 (message/id message)))]
-    (.writeTo message
-              (java.io.FileOutputStream.
-               filename))))
+  "Write a message to a file in the current directory, named after its
+   Message-ID. Returns the file name."
+  [^Message message]
+  (let [filename (apply str (drop 1 (message/id message)))]
+    (with-open [out (FileOutputStream. ^String filename)]
+      (.writeTo message out))
+    filename))
 
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
@@ -216,11 +218,11 @@
    reversed so the newest messages come first. 
   If since-uid is provided, return all messages with newer or equal uid"
   ([folder-name] (all-messages *store* folder-name))
-  ([^IMAPStore store folder-name & {:keys [since-uid]}]
-   (let [folder (open-folder store folder-name :readonly)]
+  ([store folder-name & {:keys [since-uid]}]
+   (let [^Folder folder (open-folder store folder-name :readonly)]
      (->> (if-not since-uid
             (.getMessages folder)
-            (.getMessagesByUID folder since-uid javax.mail.UIDFolder/LASTUID))
+            (.getMessagesByUID ^UIDFolder folder (long since-uid) UIDFolder/LASTUID))
           reverse))))
 
 (defn inbox
@@ -229,9 +231,11 @@
   ([store] (all-messages store "inbox")))
 
 (defn search-inbox
-  "Search your inbox for a specific term
-   Returns a vector of IMAPMessage objects"
-  [store term]
+  "Search your inbox. `query` is either a single string (matched against
+   subject and body) or search conditions as accepted by
+   `clojure-mail.folder/search`, e.g. `:subject \"foo\" :received-on :today`.
+   Returns a vector of messages."
+  [store & query]
   (let [inbox (open-folder store "inbox" :readonly)]
     (into []
-          (folder/search inbox term))))
+          (apply folder/search inbox query))))

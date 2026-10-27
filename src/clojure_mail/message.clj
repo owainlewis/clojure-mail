@@ -1,14 +1,14 @@
 (ns clojure-mail.message
-  (:require [medley.core :refer [filter-keys]])
+  (:require [clojure.string :as str])
   (:import [javax.mail.internet InternetAddress MimeMultipart MimeMessage]
-           [javax.mail Message$RecipientType Flags Flags$Flag]))
+           [javax.mail Message Message$RecipientType Flags Flags$Flag Multipart Part UIDFolder]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
   [type]
   (let [infered-type
-        (clojure.string/lower-case
-         (first (clojure.string/split type #"[;]")))]
+        (str/lower-case
+         (str/trim (first (str/split type #"[;]"))))]
     (condp = infered-type
       "multipart/alternative" :multipart
       "multipart/mixed" :multipart
@@ -22,9 +22,9 @@
    :name (.getPersonal address)})
 
 (defn recipients
-  [^MimeMessage msg recipient-type]
+  [^Message msg recipient-type]
   (map imap-address->map
-       (.getRecipients msg recipient-type)))
+       (.getRecipients msg ^Message$RecipientType recipient-type)))
 
 (defn to
   "Returns a sequence of receivers"
@@ -42,12 +42,12 @@
   (recipients m Message$RecipientType/BCC))
 
 (defn from
-  [m]
+  [^Message m]
   (map imap-address->map (.getFrom m)))
 
 (defn subject
   "Fetch the subject of a mail message"
-  [^MimeMessage msg]
+  [^Message msg]
   (.getSubject msg))
 
 (defn sender
@@ -59,27 +59,43 @@
 
 (defn date-sent
   "Return the date a mail message was sent"
-  [m]
+  [^Message m]
   (.getSentDate m))
 
 (defn date-received
   "Return the date a message was received"
-  [m]
+  [^Message m]
   (.getReceivedDate m))
 
 (defn flags
-  [m]
+  [^Message m]
   (.getFlags m))
 
-(defn content-type [m]
-  (let [type (.getContentType m)]
-    type))
+(defn content-type [^Part m]
+  (.getContentType m))
+
+(def ^:private system-flags
+  {"ANSWERED" Flags$Flag/ANSWERED
+   "DELETED"  Flags$Flag/DELETED
+   "DRAFT"    Flags$Flag/DRAFT
+   "FLAGGED"  Flags$Flag/FLAGGED
+   "RECENT"   Flags$Flag/RECENT
+   "SEEN"     Flags$Flag/SEEN
+   "USER"     Flags$Flag/USER})
 
 (defn has-flag?
+  "Returns true if `message` has `flag` set.
+   `flag` can be a `javax.mail.Flags$Flag`, a system flag name such as
+   \"SEEN\" or :seen, or the name of a user-defined flag."
   [message flag]
-  (let [f (flags message)]
+  (let [^Flags f (flags message)]
     (boolean
-     (.contains f flag))))
+     (if (instance? Flags$Flag flag)
+       (.contains f ^Flags$Flag flag)
+       (let [flag-name (name flag)]
+         (if-let [system-flag (get system-flags (str/upper-case flag-name))]
+           (.contains f ^Flags$Flag system-flag)
+           (.contains f ^String flag-name)))))))
 
 (defn read?
   "Checks if this message has been read"
@@ -107,53 +123,56 @@
   [message]
   (has-flag? message "RECENT"))
 
-(defn in-reply-to [m]
-  (.getInReplyTo m))
+(defn in-reply-to
+  "Returns the In-Reply-To header of a message, or nil"
+  [^Message m]
+  (first (.getHeader m "In-Reply-To")))
 
-(defn id [m]
+(defn id [^MimeMessage m]
   (.getMessageID m))
 
-(defn encoding [m]
+(defn encoding [^MimeMessage m]
   (.getEncoding m))
 
-(defn get-content [m]
+(defn get-content [^Part m]
   (.getContent m))
 
 (defn uid
   "return the uid of the message"
-  [message]
-  (let [folder (.getFolder message)]
+  [^Message message]
+  (let [^UIDFolder folder (.getFolder message)]
     (.getUID folder message)))
 
 (defn message-headers
   "Returns all the headers from a message"
-  [^MimeMessage msg]
+  [^Part msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
     (into []
-          (map #(hash-map (.getName %) (.getValue %)) results))))
+          (map (fn [^javax.mail.Header h] (hash-map (.getName h) (.getValue h))) results))))
 
 (defn- multipart?
   "Returns true if a message is a multipart email"
   [m]
-  (.startsWith (content-type m) "multipart"))
+  (boolean
+   (some-> ^String (content-type m) str/lower-case (str/starts-with? "multipart"))))
 
 (defn msg->map
   "Convert a mail message body into a Clojure map
    with content type and message contents"
-  [msg]
+  [^Part msg]
   {:content-type (.getContentType msg)
    :body         (.getContent msg)})
 
-(defn read-multi [mime-multi-part]
+(defn read-multi [^Multipart mime-multi-part]
   (let [count (.getCount mime-multi-part)]
-    (for [part (map #(.getBodyPart mime-multi-part %) (range count))]
+    (for [part (map #(.getBodyPart mime-multi-part (int %)) (range count))]
       (if (multipart? part)
-        (read-multi (.getContent part))
+        (read-multi (.getContent ^Part part))
         (msg->map part)))))
 
 (defn message-parts
-  [^MimeMultipart msg]
+  [^Part msg]
   (when (multipart? msg)
     (read-multi
      (get-content msg))))
@@ -199,13 +218,13 @@
                     :body message-body
                     :headers message-headers}
         kvs (if fields
-              (filter-keys (set fields) fields-map)
+              (select-keys fields-map fields)
               fields-map)]
     (reduce-kv (partial add-field msg) {} kvs)))
 
 (defn- set-flag
   "Sets a flag on a message"
-  [msg flag]
+  [^Message msg ^Flags flag]
   (.setFlags msg flag true))
 
 (defn mark-read
@@ -228,10 +247,16 @@
   [msg]
   (set-flag msg (Flags. Flags$Flag/FLAGGED)))
 
-(defn mark-as-flagged
+(defn mark-draft
   "Set DRAFT flag on a message"
   [msg]
   (set-flag msg (Flags. Flags$Flag/DRAFT)))
+
+(defn ^:deprecated mark-as-flagged
+  "Deprecated: despite its name this sets the DRAFT flag.
+   Use `mark-draft` for DRAFT or `mark-flagged` for FLAGGED."
+  [msg]
+  (mark-draft msg))
 
 (defn mark-recent
   "Set RECENT flag on a message"
