@@ -34,10 +34,10 @@ jobs:
           lein: 2.11.2
       - name: Run tests
         run: |
-          if [[ "${{ matrix.clojure }}" == "1.12" ]]; then
-            lein with-profile +clojure-1.12 test
+          if [[ "${{ matrix.clojure }}" == "1.11" ]]; then
+            lein with-profile +clojure-1.11 test
           else
-            lein test
+            lein with-profile +clojure-1.12 test
           fi
 
   quality:
@@ -54,7 +54,7 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
         with:
           lein: 2.11.2
-          clj-kondo: 2026.05.25
+          clj-kondo: 2026.10.26
       - name: Check formatting
         run: lein cljfmt check
       - name: Compile and validate namespaces

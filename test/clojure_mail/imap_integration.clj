@@ -1,9 +1,16 @@
 (ns clojure-mail.imap-integration
-  (:require [clojure.test :refer :all]
-            [clojure-mail.core :refer :all]
-            [clojure-mail.message :as message]
-            [clojure-mail.helpers.fixtures :as fxt])
-  (:import (javax.mail AuthenticationFailedException)))
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure-mail.core :refer [all-messages close-folder close-store connected?
+                                       folders get-default-folder get-folder
+                                       get-folder-uid-validity inbox mark-all-read
+                                       message-count open-folder search-inbox store
+                                       sub-folder? unread-messages user-flags with-folder
+                                       with-store]]
+            [clojure-mail.events :as events]
+            [clojure-mail.folder :as folder]
+            [clojure-mail.helpers.fixtures :as fxt]
+            [clojure-mail.message :as message])
+  (:import [javax.mail AuthenticationFailedException Flags Folder]))
 
 (use-fixtures :once (fxt/make-gm-fixture :imap))
 
@@ -28,14 +35,12 @@
     (let [port (fxt/get-server-port :imap)
           test-store (store "imap" ["localhost" port] "user1" "password1")]
       (is (connected? test-store))
-      (close-store test-store)))
-  ;; Test below disabled since authentication failures seem to genearate a runaway thread
-  ;; in the IMAP server
-  ;; TODO Investigate GreenMail e-mail thread and enable test
-  #_(testing "A javax.mail.AuthenticationFailedException is thrown if credentials are not correct."
-      (let [port (fxt/get-server-port :imap)]
-        (is (thrown? AuthenticationFailedException
-                     (store "imap" ["localhost" port] "user1" "bad-password"))))))
+      (close-store test-store)
+      (is (not (connected? test-store)))))
+  (testing "A javax.mail.AuthenticationFailedException is thrown if credentials are not correct."
+    (let [port (fxt/get-server-port :imap)]
+      (is (thrown? AuthenticationFailedException
+                   (store "imap" ["localhost" port] "user1" "bad-password"))))))
 
 (deftest multiple-store-test
   (testing "Multiple stores running at the same time identify themselves as connected."
@@ -73,40 +78,140 @@
           all-msgs (all-messages test-store-2 "inbox")
           sut (first all-msgs)]
       (is (= (:subject target-msg) (message/subject sut)) "The retrieved message subject matches.")
-      (is (= (:body target-msg) (->> sut message/message-body :body)) "The retieved message body matches.")
+      (is (= (:body target-msg) (->> sut message/message-body :body)) "The retrieved message body matches.")
       (is (= (:from target-msg) (->> sut message/from first :address)) "The retrieved message from field matches.")
       (is (= (:to target-msg) (->> sut message/to first :address)) "The retrieved message to field matches.")
       (close-store test-store-2))))
 
-(deftest seen-flag-test
-  (let [user-index 1
-        port (fxt/get-server-port :imap)
-        credentials (fxt/get-credentials-from-config user-config user-index)]
-    (testing "A just retrieved message is marked as not read."
-      (let [test-store (apply store "imap" ["localhost" port] credentials)
-            sut (first (all-messages test-store "inbox"))]
-        (is (not (message/read? sut)))
-        (close-store test-store)))
-    (testing "A message marked as read is reported as read."
-      (let [test-store (apply store "imap" ["localhost" port] credentials)
-            folder (open-folder test-store "inbox" :readwrite)
-            sut (first (.getMessages ^javax.mail.Folder folder))]
-        (message/mark-read sut)
-        (is (message/read? sut))
+(deftest inbox-and-since-uid-test
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")]
+    (try
+      (let [msgs (inbox test-store)
+            uids (mapv message/uid msgs)]
+        (is (= 2 (count msgs)))
+        (is (= ["Another e-mail from user2" "From user2 to user1"]
+               (mapv message/subject msgs)))
+        (is (every? pos? uids))
+        (let [newer (all-messages test-store "inbox" :since-uid (first uids))]
+          (is (= ["Another e-mail from user2"]
+                 (mapv message/subject newer)))))
+      (finally
         (close-store test-store)))))
 
-(deftest message-count-closes-folder-test
-  (testing "message-count does not leave the folder open"
-    (let [port (fxt/get-server-port :imap)
-          test-store (store "imap" ["localhost" port] "user1" "password1")]
-      (is (= 2 (message-count test-store "inbox")))
-      (is (not (.isOpen ^javax.mail.Folder (get-folder test-store "inbox"))))
-      (close-store test-store))))
+(deftest seen-flag-and-mark-all-read-test
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")]
+    (try
+      (testing "unread-messages returns both unread messages"
+        (is (= 2 (count (unread-messages test-store "inbox")))))
+      (testing "mark-all-read marks all messages seen and closes the folder"
+        (mark-all-read test-store "inbox")
+        (is (not (.isOpen ^Folder (get-folder test-store "inbox"))))
+        (is (= 0 (count (unread-messages test-store "inbox")))))
+      (testing "individual message flags and user flags work over IMAP"
+        (with-folder [f test-store "inbox" :readwrite]
+          (let [msg (first (folder/get-messages f))]
+            (is (message/read? msg))
+            (.setFlags ^javax.mail.Message msg (Flags. "custom-label") true)
+            (is (message/has-flag? msg "custom-label"))
+            (is (some #{"custom-label"} (user-flags msg))))))
+      (finally
+        (close-store test-store)))))
+
+(deftest message-count-and-with-folder-close-test
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")]
+    (try
+      (testing "message-count does not leave the folder open"
+        (is (= 2 (message-count test-store "inbox")))
+        (is (not (.isOpen ^Folder (get-folder test-store "inbox")))))
+      (testing "core/with-folder opens and closes folder, even on exception"
+        (let [captured (atom nil)]
+          (is (= 2 (with-folder [f test-store "inbox"]
+                     (reset! captured f)
+                     (is (.isOpen ^Folder f))
+                     (folder/message-count f))))
+          (is (not (.isOpen ^Folder @captured))))
+        (let [captured (atom nil)]
+          (is (thrown? RuntimeException
+                       (with-folder [f test-store "inbox" :readonly]
+                         (reset! captured f)
+                         (throw (RuntimeException. "boom")))))
+          (is (not (.isOpen ^Folder @captured))))
+        (testing "core/with-folder works with *store*"
+          (with-store test-store
+            (is (= 2 (with-folder [f "inbox"]
+                       (folder/message-count f))))
+            (is (= 2 (with-folder [f "inbox" :readonly]
+                       (folder/message-count f)))))))
+      (testing "folder/with-folder binds current-folder and closes folder on exit"
+        (let [captured (atom nil)]
+          (is (= 2 (folder/with-folder "inbox" test-store
+                     (reset! captured folder/current-folder)
+                     (is (.isOpen ^Folder folder/current-folder))
+                     (folder/message-count folder/current-folder))))
+          (is (not (.isOpen ^Folder @captured)))))
+      (testing "open-folder rejects invalid permission level with clear exception"
+        (is (thrown? IllegalArgumentException
+                     (open-folder test-store "inbox" :invalid-mode))))
+      (finally
+        (close-store test-store)))))
+
+(deftest folder-operations-test
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")]
+    (try
+      (testing "folder listing and metadata"
+        (let [default-f (get-default-folder test-store)]
+          (is (sub-folder? default-f))
+          (is (seq (folder/list default-f)))
+          (is (some #{"INBOX"} (flatten (folders test-store))))))
+      (testing "folder accessors and fetch profiles"
+        (with-folder [f test-store "INBOX" :readonly]
+          (is (= "INBOX" (folder/full-name f)))
+          (is (pos? (get-folder-uid-validity f)))
+          (is (= 2 (folder/message-count f)))
+          (is (= 2 (folder/unread-message-count f)))
+          (is (integer? (folder/new-message-count f)))
+          (let [m1 (folder/get-message f 1)
+                uid1 (message/uid m1)
+                range-msgs (folder/get-messages f 1 1)]
+            (is (= "From user2 to user1" (message/subject m1)))
+            (is (= (message/subject m1) (message/subject (folder/get-message-by-uid f uid1))))
+            (is (= 1 (count range-msgs)))
+            (doseq [profile [:message :headers :flags :envelope :content-info :size]]
+              (folder/fetch-messages f range-msgs :fetch-profile profile)))))
+      (finally
+        (close-store test-store)))))
 
 (deftest search-inbox-test
-  (testing "search-inbox finds messages by subject"
-    (let [port (fxt/get-server-port :imap)
-          test-store (store "imap" ["localhost" port] "user1" "password1")]
-      (is (= ["Another e-mail from user2"]
-             (map message/subject (search-inbox test-store :subject "Another"))))
-      (close-store test-store))))
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")]
+    (try
+      (testing "search-inbox finds messages by subject"
+        (is (= ["Another e-mail from user2"]
+               (mapv message/subject (search-inbox test-store :subject "Another")))))
+      (testing "search-inbox supports single string, multi-condition and OR vectors"
+        (is (= 2 (count (search-inbox test-store "random text"))))
+        (is (= ["Another e-mail from user2"]
+               (mapv message/subject
+                     (search-inbox test-store :from "user2@localhost" :body "More random" :-seen?))))
+        (is (= 2 (count (search-inbox test-store :subject ["From user2" "Another"])))))
+      (finally
+        (close-store test-store)))))
+
+(deftest connection-listener-integration-test
+  (let [port (fxt/get-server-port :imap)
+        test-store (store "imap" ["localhost" port] "user1" "password1")
+        closed-promise (promise)]
+    (try
+      (let [f (open-folder test-store "inbox" :readonly)]
+        (events/add-connection-listener f {:closed #(deliver closed-promise %)})
+        (close-folder f)
+        (let [evt (deref closed-promise 2000 :timeout)]
+          (is (not= :timeout evt))
+          (is (= :closed (:type evt)))
+          (is (= f (:source evt)))))
+      (finally
+        (close-store test-store)))))

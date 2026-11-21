@@ -1,0 +1,127 @@
+name: Automated Changelog
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - CHANGELOG.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: changelog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-changelog:
+    name: Update draft release and CHANGELOG.md
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes and update draft release & CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+
+          repo = os.environ["REPO"]
+
+          with open("project.clj", "r", encoding="utf-8") as f:
+              project_clj = f.read()
+
+          m = re.search(r'\(defproject\s+\S+\s+"([^"]+)"', project_clj)
+          if not m:
+              sys.exit("Could not determine project version from project.clj")
+
+          version = m.group(1).removesuffix("-SNAPSHOT")
+          tag_name = f"v{version}"
+          draft_title = f"Next Release ({tag_name})"
+
+          # Generate release notes using .github/release.yml categories
+          notes_raw = subprocess.check_output(
+              [
+                  "gh", "api", f"repos/{repo}/releases/generate-notes",
+                  "-f", f"tag_name={tag_name}",
+                  "-f", "target_commitish=master",
+              ],
+              text=True,
+          )
+          notes_body = json.loads(notes_raw).get("body", "").strip()
+
+          # Create or update the draft GitHub release
+          releases_raw = subprocess.check_output(
+              ["gh", "api", f"repos/{repo}/releases?per_page=20"],
+              text=True,
+          )
+          releases = json.loads(releases_raw)
+          draft = next(
+              (r for r in releases if r.get("draft") and (r.get("tag_name") == tag_name or r.get("name", "").startswith("Next Release"))),
+              None,
+          )
+
+          payload = {
+              "tag_name": tag_name,
+              "target_commitish": "master",
+              "name": draft_title,
+              "body": notes_body,
+              "draft": True,
+          }
+
+          if draft:
+              subprocess.run(
+                  ["gh", "api", "--method", "PATCH", f"repos/{repo}/releases/{draft['id']}", "--input", "-"],
+                  input=json.dumps(payload),
+                  text=True,
+                  check=True,
+              )
+          else:
+              subprocess.run(
+                  ["gh", "api", "--method", "POST", f"repos/{repo}/releases", "--input", "-"],
+                  input=json.dumps(payload),
+                  text=True,
+                  check=True,
+              )
+
+          # Update the auto-changelog section in CHANGELOG.md if markers exist
+          start_marker = "<!-- auto-changelog:start -->"
+          end_marker = "<!-- auto-changelog:end -->"
+          with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+              changelog = f.read()
+
+          if start_marker in changelog and end_marker in changelog:
+              # Demote markdown headings inside generated notes so they nest under ## [Unreleased]
+              nested_notes = re.sub(r"^(#{2,3})\s+", lambda match: "#" * (len(match.group(1)) + 1) + " ", notes_body, flags=re.MULTILINE)
+              replacement = f"{start_marker}\n{nested_notes}\n{end_marker}"
+              updated = re.sub(
+                  re.escape(start_marker) + r".*?" + re.escape(end_marker),
+                  lambda _: replacement,
+                  changelog,
+                  flags=re.DOTALL,
+              )
+              if updated != changelog:
+                  with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+                      f.write(updated)
+          PY
+
+      - name: Commit CHANGELOG.md if updated
+        run: |
+          if ! git diff --quiet CHANGELOG.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md
+            git commit -m "docs: update automated changelog [skip ci]"
+            git push origin HEAD:master
+          fi

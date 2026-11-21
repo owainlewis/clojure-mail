@@ -16,14 +16,13 @@
 (defonce ^:dynamic *store* nil)
 
 (defmacro with-store
-  "Takes a store which has been connected, and binds to to *store* within the
+  "Takes a store which has been connected, and binds it to `*store*` within the
   scope of the form.
 
   **Usage:**
 
-   user> (with-store (gmail-store \"username@gmail.com\" \"password\")
-           (read-messages :inbox 5))
-   ;=> "
+   user> (with-store (gmail/store \"username@gmail.com\" \"app-password\")
+           (all-messages \"inbox\"))"
   [s & body]
   `(binding [*store* ~s]
      ~@body))
@@ -62,7 +61,7 @@
    ports if required."
   [protocol server]
   (let [default-port (cond
-                       (and (number? protocol) (< protocol 65536)) protocol
+                       (and (number? protocol) (pos? protocol) (< protocol 65536)) protocol
                        (= (keyword protocol) :imaps) 993
                        (= (keyword protocol) :imap) 143
                        :else 993)]
@@ -96,11 +95,15 @@
        (.connect ^String target-host (int target-port) ^String email ^String pass)))))
 
 (defn xoauth2-store
+  "Connect to an IMAP store using OAuth 2 (XOAUTH2 SASL mechanism).
+   `server` may be a hostname string or `[hostname port]`."
   ([server email oauth-token]
    (xoauth2-store "imaps" server email oauth-token))
   ([protocol server email oauth-token]
-   (let [p (as-properties
-            {(format "mail.%s.ssl.enable" protocol)         true
+   (let [[target-host target-port] (server->host-port protocol server)
+         p (as-properties
+            {"mail.store.protocol"                          protocol
+             (format "mail.%s.ssl.enable" protocol)         true
              (format "mail.%s.sasl.enable" protocol)        true
              (format "mail.%s.auth.login.disable" protocol) true
              (format "mail.%s.auth.plain.disable" protocol) true
@@ -108,7 +111,7 @@
              (format "mail.%s.usesocketchannels" protocol)  true})
          session (Session/getInstance p)]
      (doto (.getStore session ^String protocol)
-       (.connect ^String server ^String email ^String oauth-token)))))
+       (.connect ^String target-host (int target-port) ^String email ^String oauth-token)))))
 
 (defn connected?
   "Returns true if a connection is established"
@@ -142,7 +145,7 @@
   (not (zero? (bit-and (.getType folder) Folder/HOLDS_FOLDERS))))
 
 (defn folders
-  "Returns a seq of all IMAP folders inlcuding sub folders"
+  "Returns a seq of all IMAP folders including sub folders"
   ([^Store store] (folders store (.getDefaultFolder store)))
   ([store ^Folder f]
    (map
@@ -159,21 +162,64 @@
 (defn open-folder
   "Open and return a folder.
   A folder-name is string (usually a label name)"
-  ([folder-name perm-level] (open-folder *store* folder-name perm-level))
-  ([store folder-name perm-level]
-   (let [^Folder found-folder (get-folder store folder-name)]
-     (.open found-folder (int (get folder-permissions perm-level)))
+  (^Folder [folder-name perm-level] (open-folder *store* folder-name perm-level))
+  (^Folder [store folder-name perm-level]
+   (let [mode (or (get folder-permissions perm-level)
+                  (throw (IllegalArgumentException.
+                          (str "Unknown folder permission level: " (pr-str perm-level)
+                               ". Expected one of " (keys folder-permissions)))))
+         ^Folder found-folder (get-folder store folder-name)]
+     (.open found-folder (int mode))
      found-folder)))
+
+(defn close-folder
+  "Close an open folder if it is currently open. Expunges deleted messages when
+   `expunge?` is true (default false)."
+  ([^Folder folder]
+   (close-folder folder false))
+  ([^Folder folder expunge?]
+   (when (.isOpen folder)
+     (.close folder (boolean expunge?)))))
+
+(defn ^:no-doc open-folder*
+  (^Folder [folder-name]
+   (open-folder *store* folder-name :readonly))
+  (^Folder [store-or-folder folder-or-perm]
+   (if (instance? Store store-or-folder)
+     (open-folder store-or-folder folder-or-perm :readonly)
+     (open-folder *store* store-or-folder folder-or-perm)))
+  (^Folder [store folder-name perm-level]
+   (open-folder store folder-name perm-level)))
+
+(defmacro with-folder
+  "Open a folder, bind it to `sym`, evaluate `body`, and close the folder on exit
+   (without expunging).
+
+   Bindings may be:
+     [sym store folder-name perm-level]
+     [sym store folder-name]            ; defaults to :readonly
+     [sym folder-name perm-level]       ; uses *store*
+     [sym folder-name]                  ; uses *store* and :readonly
+
+   Usage:
+     (with-folder [f store \"INBOX\" :readonly]
+       (clojure-mail.folder/message-count f))"
+  [[sym & open-args] & body]
+  (when-not (<= 1 (count open-args) 3)
+    (throw (IllegalArgumentException.
+            "with-folder expects [sym folder-name], [sym folder-name perm-level], [sym store folder-name], or [sym store folder-name perm-level]")))
+  `(let [~sym (open-folder* ~@open-args)]
+     (try
+       ~@body
+       (finally
+         (close-folder ~sym false)))))
 
 (defn message-count
   "Returns the number of messages in a folder"
   ([folder-name] (message-count *store* folder-name))
   ([store folder-name]
-   (let [^Folder folder (open-folder store folder-name :readonly)]
-     (try
-       (.getMessageCount folder)
-       (finally
-         (.close folder false))))))
+   (with-folder [^Folder folder store folder-name :readonly]
+     (.getMessageCount folder))))
 
 (defn user-flags [message]
   (let [^Flags flags (message/flags message)]
@@ -191,19 +237,23 @@
   "Mark all messages in folder as read"
   ([folder-name] (mark-all-read *store* folder-name))
   ([store folder-name]
-   (let [^Folder folder (open-folder store folder-name :readwrite)
-         messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
-     (doseq [^Message m messages]
-       (.setFlags m (Flags. Flags$Flag/SEEN) true)))))
+   (with-folder [^Folder folder store folder-name :readwrite]
+     (let [messages (.search folder (FlagTerm. (Flags. Flags$Flag/SEEN) false))]
+       (doseq [^Message m messages]
+         (.setFlags m (Flags. Flags$Flag/SEEN) true))))))
 
 (defn save-message-to-file
-  "Write a message to a file in the current directory, named after its
-   Message-ID. Returns the file name."
-  [^Message message]
-  (let [filename (apply str (drop 1 (message/id message)))]
-    (with-open [out (FileOutputStream. ^String filename)]
-      (.writeTo message out))
-    filename))
+  "Write a message to a file. With one argument, writes to the current directory
+   named after its Message-ID. With two arguments, writes to `path`.
+   Returns the file path."
+  ([^Message message]
+   (let [filename (apply str (drop 1 (message/id message)))]
+     (save-message-to-file message filename)))
+  ([^Message message path]
+   (let [target (str path)]
+     (with-open [out (FileOutputStream. target)]
+       (.writeTo message out))
+     target)))
 
 (defn dump
   "Handy function that dumps out a batch of emails to disk"
@@ -211,7 +261,7 @@
   (let [message-futures
         (doall
          (map #(future (save-message-to-file %)) msgs))]
-    (map deref message-futures)))
+    (doall (map deref message-futures))))
 
 (defn all-messages
   "Given a store and folder returns all messages
@@ -226,7 +276,7 @@
           reverse))))
 
 (defn inbox
-  "Get n messages from your inbox"
+  "Get all messages from your inbox, newest first."
   ([] (all-messages *store* "inbox"))
   ([store] (all-messages store "inbox")))
 

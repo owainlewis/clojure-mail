@@ -128,6 +128,16 @@ If reading a field fails, the exception is collected under `:errors` instead of 
 (mail/unread-messages store "inbox")
 ```
 
+### Attachments
+
+```clojure
+(def atts (message/attachments (first msgs)))
+;; => [{:filename "report.pdf" :content-type "application/pdf" :disposition "attachment" :size 1024 :part ...}]
+
+;; Save into a directory (using the sanitized filename) or to an explicit file path
+(message/save-attachment (first atts) "/tmp/downloads")
+```
+
 ### Flags
 
 ```clojure
@@ -146,6 +156,11 @@ Changing flags requires the folder to be open with `:readwrite`.
 (mail/folders store)                         ; nested folder names
 (mail/message-count store "inbox")
 (def inbox (mail/open-folder store "inbox" :readonly))
+(mail/close-folder inbox)
+
+;; Automatically close the folder on exit
+(mail/with-folder [f store "inbox" :readonly]
+  (clojure-mail.folder/message-count f))
 ```
 
 Gmail folder shortcuts:
@@ -164,7 +179,7 @@ Gmail folder shortcuts:
 (mail/search-inbox store [:from "a@example.com" :from "b@example.com"]) ; nested vector is OR-ed
 ```
 
-Conditions: `:subject`, `:body`, `:from`, `:to`, `:cc`, `:bcc`, `:header`, `:received-before`, `:received-after`, `:received-on`, `:sent-before`, `:sent-after`, `:sent-on`, and the flags `:seen?`, `:answered?`, `:deleted?`, `:draft?`, `:flagged?`, `:recent?` (prefix with `-` to negate, e.g. `:-seen?`). Dates accept `"yyyy-MM-dd"`, `java.util.Date`, `:today` and `:yesterday`.
+Conditions: `:subject`, `:body`, `:from`, `:to`, `:cc`, `:bcc`, `:header`, `:received-before`, `:received-after`, `:received-on`, `:sent-before`, `:sent-after`, `:sent-on`, and the flags `:seen?`, `:answered?`, `:deleted?`, `:draft?`, `:flagged?`, `:recent?` (prefix with `-` to negate, e.g. `:-seen?`). Dates accept `"yyyy-MM-dd"`, `java.util.Date`, `java.time.LocalDate`, `java.time.Instant`, `:today` and `:yesterday`.
 
 To search any folder, use `clojure-mail.folder/search` with an open folder.
 
@@ -184,7 +199,9 @@ Servers that support IMAP IDLE can push new mail to you:
  (fn [{:keys [messages]}] (prn :added (map message/subject messages)))
  (fn [e] (prn :removed e))
  folder
- manager)
+ manager
+ {:on-closed (fn [e] (prn :connection-closed e))
+  :on-error  (fn [ex] (prn :idle-error ex))})
 
 ;; later
 (events/stop manager)
