@@ -1,0 +1,27 @@
+changelog:
+  exclude:
+    labels:
+      - duplicate
+      - invalid
+      - wontfix
+      - ignore-for-release
+  categories:
+    - title: Breaking Changes
+      labels:
+        - major
+    - title: Enhancements
+      labels:
+        - enhancement
+    - title: Bug Fixes
+      labels:
+        - bug
+    - title: Documentation
+      labels:
+        - docs
+    - title: Dependencies & CI
+      labels:
+        - dependencies
+        - github_actions
+    - title: Other Changes
+      labels:
+        - "*"

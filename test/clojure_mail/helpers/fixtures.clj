@@ -2,7 +2,7 @@
   "Namespace with functions to reduce the boilerplate of fixture creation."
   (:require [clojure-mail.helpers.greenmail :as gh]))
 
-(def ^:dynamic *the-gm*)
+(def ^:dynamic *the-gm* nil)
 
 (defn make-gm-fixture
   "Creates a fixture (so returns a function) that, before any test,

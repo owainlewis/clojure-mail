@@ -1,20 +1,22 @@
 (ns clojure-mail.message
-  (:require [clojure.string :as str])
-  (:import [javax.mail.internet InternetAddress MimeMultipart MimeMessage]
-           [javax.mail Message Message$RecipientType Flags Flags$Flag Multipart Part UIDFolder]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str])
+  (:import [java.io File]
+           [javax.mail.internet InternetAddress MimeMessage MimeUtility]
+           [javax.mail Flags Flags$Flag Header Message Message$RecipientType Multipart Part UIDFolder]))
 
 (defn mime-type
   "Determine the function to call to get the body text of a message"
   [type]
-  (let [infered-type
-        (str/lower-case
-         (str/trim (first (str/split type #"[;]"))))]
-    (condp = infered-type
-      "multipart/alternative" :multipart
-      "multipart/mixed" :multipart
-      "text/html" :html
-      "text/plain" :plain
-      nil)))
+  (when type
+    (let [inferred-type
+          (str/lower-case
+           (str/trim (first (str/split type #"[;]"))))]
+      (cond
+        (str/starts-with? inferred-type "multipart/") :multipart
+        (= inferred-type "text/html") :html
+        (= inferred-type "text/plain") :plain
+        :else nil))))
 
 (defn imap-address->map
   [^InternetAddress address]
@@ -138,18 +140,18 @@
   (.getContent m))
 
 (defn uid
-  "return the uid of the message"
+  "Return the UID of the message, or nil if its folder is not a UIDFolder."
   [^Message message]
-  (let [^UIDFolder folder (.getFolder message)]
-    (.getUID folder message)))
+  (let [folder (.getFolder message)]
+    (when (instance? UIDFolder folder)
+      (.getUID ^UIDFolder folder message))))
 
 (defn message-headers
   "Returns all the headers from a message"
   [^Part msg]
   (let [headers (.getAllHeaders msg)
         results (enumeration-seq headers)]
-    (into []
-          (map (fn [^javax.mail.Header h] (hash-map (.getName h) (.getValue h))) results))))
+    (mapv (fn [^Header h] (hash-map (.getName h) (.getValue h))) results)))
 
 (defn- multipart?
   "Returns true if a message is a multipart email"
@@ -179,17 +181,90 @@
 
 (defn message-body
   "Read all the body content from a message
-   If the message is multipart then a vector is
+   If the message is multipart then a sequence is
    returned containing each message
    [{:content-type \"TEXT\\PLAIN\" :body \"Foo\"}
     {:content-type \"TEXT\\HTML\"  :body \"Bar\"}]"
-  [^MimeMessage msg]
+  [^Part msg]
   (if (multipart? msg)
     (message-parts msg)
     (msg->map msg)))
 
+(defn- decode-filename
+  [filename]
+  (when filename
+    (try
+      (MimeUtility/decodeText filename)
+      (catch Exception _
+        filename))))
+
+(defn attachment?
+  "Returns true if `part` is an attachment (has an ATTACHMENT disposition, or
+   carries a filename without an INLINE disposition)."
+  [^Part part]
+  (let [disposition (.getDisposition part)
+        filename (.getFileName part)]
+    (boolean
+     (or (and disposition (.equalsIgnoreCase Part/ATTACHMENT disposition))
+         (and filename
+              (not (str/blank? filename))
+              (not (and disposition (.equalsIgnoreCase Part/INLINE disposition))))))))
+
+(defn- part->attachment-map
+  [^Part part]
+  {:filename     (decode-filename (.getFileName part))
+   :content-type (.getContentType part)
+   :disposition  (.getDisposition part)
+   :size         (.getSize part)
+   :part         part})
+
+(defn attachments
+  "Returns a vector of attachment maps found in `msg`, walking nested multiparts
+   recursively. Each map contains `:filename`, `:content-type`, `:disposition`,
+   `:size`, and `:part` (the underlying `javax.mail.Part`)."
+  [^Part msg]
+  (letfn [(walk [^Part part]
+            (if (multipart? part)
+              (let [^Multipart mp (.getContent part)]
+                (mapcat (fn [i] (walk (.getBodyPart mp (int i))))
+                        (range (.getCount mp))))
+              (when (attachment? part)
+                [(part->attachment-map part)])))]
+    (vec (walk msg))))
+
+(defn- sanitize-filename
+  [filename]
+  (let [base (when filename
+               (-> (str filename)
+                   (str/replace "\\" "/")
+                   (str/split #"/")
+                   last
+                   str/trim))]
+    (if (or (nil? base) (str/blank? base) (= "." base) (= ".." base))
+      "attachment"
+      base)))
+
+(defn save-attachment
+  "Write an attachment (either a map from `attachments` or a `javax.mail.Part`)
+   to `dest`. If `dest` is an existing directory, the file is created inside it
+   using the sanitized attachment filename. Returns the written `java.io.File`."
+  [attachment dest]
+  (let [^Part part (if (map? attachment) (:part attachment) attachment)
+        raw-name (if (map? attachment)
+                   (:filename attachment)
+                   (decode-filename (.getFileName part)))
+        dest-file (io/file dest)
+        ^File target (if (.isDirectory dest-file)
+                       (io/file dest-file (sanitize-filename raw-name))
+                       dest-file)]
+    (when-let [parent (.getParentFile target)]
+      (.mkdirs parent))
+    (with-open [in (.getInputStream part)]
+      (io/copy in target))
+    target))
+
 (defn add-field
-  "add the result of (f msg) to a map m, if there is an Exception, add the Exception to the :error field of the map"
+  "Add the result of (f msg) to a map m; if an Exception is thrown, add it to the :errors field of the map."
   [msg m k f]
   (try
     (assoc m k (f msg))

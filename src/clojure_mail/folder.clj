@@ -1,19 +1,29 @@
 (ns clojure-mail.folder
   (:refer-clojure :exclude [list])
   (:import [javax.mail.search SearchTerm OrTerm AndTerm SubjectTerm HeaderTerm BodyTerm RecipientStringTerm FromStringTerm FlagTerm ReceivedDateTerm SentDateTerm ComparisonTerm]
-           (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem IMAPMessage)
+           (com.sun.mail.imap IMAPFolder IMAPFolder$FetchProfileItem)
            (java.text SimpleDateFormat)
-           (java.util Calendar)
-           (javax.mail FetchProfile FetchProfile$Item Flags Flags$Flag Message$RecipientType)))
+           (java.time Instant LocalDate ZoneId)
+           (java.util Calendar Date)
+           (javax.mail FetchProfile FetchProfile$Item Flags Flags$Flag Folder Message$RecipientType Store)))
 
 ;; Note that the get folder fn is part of the store namespace
 
-(def ^:dynamic current-folder)
+(def ^:dynamic current-folder nil)
 
-(defmacro with-folder [folder store & body]
-  `(let [fd# (doto (.getFolder ~(vary-meta store assoc :tag `javax.mail.Store) ~folder) (.open IMAPFolder/READ_ONLY))]
-     (binding [current-folder fd#]
-       (do ~@body))))
+(defmacro with-folder
+  "Opens `folder` read-only on `store`, binds `current-folder` to the open
+   folder while evaluating `body`, and closes the folder on exit."
+  [folder store & body]
+  `(let [^Store store# ~store
+         ^Folder fd# (.getFolder store# ~folder)]
+     (.open fd# IMAPFolder/READ_ONLY)
+     (try
+       (binding [current-folder fd#]
+         ~@body)
+       (finally
+         (when (.isOpen fd#)
+           (.close fd# false))))))
 
 (defn get-folder
   "Returns an IMAPFolder instance"
@@ -109,11 +119,17 @@
 (def date-formats ["yyyy-MM-dd" "yyyy.MM.dd"])
 
 (defn to-date
-  "Parses a date string to date"
+  "Parses a date string (`yyyy-MM-dd` or `yyyy.MM.dd`), `java.util.Date`,
+   `java.time.Instant`, `java.time.LocalDate`, `:today`, or `:yesterday`
+   into a `java.util.Date`."
   [ds]
   (cond
-    (string? ds) (first (remove nil? (map #(try (.parse (SimpleDateFormat. %) ds) (catch Exception e nil)) date-formats)))
-    (instance? java.util.Date ds) ds
+    (string? ds) (first (remove nil? (map #(try (.parse (SimpleDateFormat. ^String %) ^String ds)
+                                                (catch Exception _ nil))
+                                          date-formats)))
+    (instance? Date ds) ds
+    (instance? Instant ds) (Date/from ^Instant ds)
+    (instance? LocalDate ds) (Date/from (.toInstant (.atStartOfDay ^LocalDate ds (ZoneId/systemDefault))))
     (= ds :today) (.getTime (Calendar/getInstance))
     (= ds :yesterday) (let [d (Calendar/getInstance)]
                         (.add d Calendar/DAY_OF_MONTH -1)
@@ -138,24 +154,35 @@
    (let [ft (first query)
          or-term-builder-1 (fn [ctor params]
                              (if (coll? params)
-                               (OrTerm. ^"[Ljavax.mail.search.SearchTerm;" (into-array SearchTerm (map ctor params)))
+                               (let [terms (map ctor params)]
+                                 (case (count terms)
+                                   0 (throw (IllegalArgumentException. "Search condition collection must not be empty"))
+                                   1 (first terms)
+                                   (OrTerm. ^"[Ljavax.mail.search.SearchTerm;" (into-array SearchTerm terms))))
                                (ctor params)))
          or-term-builder-2 (fn [ctor params]
-                             (if (= (count params) 2)
-                               (ctor (first params) (second params))
-                               (OrTerm. ^"[Ljavax.mail.search.SearchTerm;" (into-array SearchTerm (map (fn [[p1 p2]] (ctor p1 p2)) (partition 2 params))))))
+                             (let [pairs (partition 2 params)]
+                               (case (count pairs)
+                                 0 (throw (IllegalArgumentException. "Header search requires at least one name/value pair"))
+                                 1 (let [[p1 p2] (first pairs)] (ctor p1 p2))
+                                 (OrTerm. ^"[Ljavax.mail.search.SearchTerm;"
+                                  (into-array SearchTerm (map (fn [[p1 p2]] (ctor p1 p2)) pairs))))))
+         parse-date (fn [v]
+                      (or (to-date v)
+                          (throw (IllegalArgumentException. (str "Invalid search date: " (pr-str v))))))
          rec-call (fn [skip-n term] (build-search-terms (nthnext query skip-n) (conj terms-so-far term) and-join))]
      (case ft
        :body (rec-call 2 (or-term-builder-1 #(BodyTerm. ^String %) (second query)))
        :from (rec-call 2 (or-term-builder-1 #(FromStringTerm. ^String %) (second query)))
-       (:to :cc :bcc) (rec-call 2 (RecipientStringTerm. (to-recipient-type ft) (second query)))
+       (:to :cc :bcc) (let [rt (to-recipient-type ft)]
+                        (rec-call 2 (or-term-builder-1 #(RecipientStringTerm. rt ^String %) (second query))))
        (:answered? :deleted? :draft? :recent? :seen? :flagged?) (rec-call 1 (FlagTerm. (Flags. ^Flags$Flag (to-flag ft)) true))
        (:-answered? :-deleted? :-draft? :-recent? :-seen? :-flagged?) (rec-call 1 (FlagTerm. (Flags. ^Flags$Flag (to-flag ft)) false))
        :header (if (coll? (second query))
                  (rec-call 2 (or-term-builder-2 #(HeaderTerm. ^String %1 ^String %2) (second query)))
                  (rec-call 3 (or-term-builder-2 #(HeaderTerm. ^String %1 ^String %2) [(second query) (nth query 2)])))
-       (:received-before :received-after :received-on) (rec-call 2 (ReceivedDateTerm. (to-date-comparison ft) (to-date (second query))))
-       (:sent-before :sent-after :sent-on) (rec-call 2 (SentDateTerm. (to-date-comparison ft) (to-date (second query))))
+       (:received-before :received-after :received-on) (rec-call 2 (ReceivedDateTerm. (to-date-comparison ft) (parse-date (second query))))
+       (:sent-before :sent-after :sent-on) (rec-call 2 (SentDateTerm. (to-date-comparison ft) (parse-date (second query))))
        :subject (rec-call 2 (or-term-builder-1 #(SubjectTerm. ^String %) (second query)))
        nil (cond
              (empty? terms-so-far) nil ; probably an error
@@ -165,7 +192,9 @@
                      (OrTerm. (into-array SearchTerm terms-so-far))))
         ; default case
        (if (coll? ft)
-         (rec-call 1 (build-search-terms ft [] (not and-join)))
+         (if-let [sub-term (build-search-terms ft [] (not and-join))]
+           (rec-call 1 sub-term)
+           (build-search-terms (next query) terms-so-far and-join))
           ; skip otherwise
          (build-search-terms (next query) terms-so-far and-join))))))
 
