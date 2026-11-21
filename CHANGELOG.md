@@ -41,7 +41,43 @@ All notable changes to this project are documented here. The format follows [Kee
 - Project URL now points at `github.com/owainlewis/clojure-mail`.
 
 <!-- auto-changelog:start -->
-<!-- Automatically populated from merged PRs on push to master -->
+<!-- Release notes generated using configuration in .github/release.yml at master -->
+
+### What's Changed
+#### Enhancements
+* Improve library reliability, test coverage, dependencies, and automated changelog by @owainlewis in https://github.com/owainlewis/clojure-mail/pull/81
+#### Bug Fixes
+* Fixes by @kwieloch in https://github.com/owainlewis/clojure-mail/pull/65
+#### Other Changes
+* adds basic IMAP UID support by @erjoalgo in https://github.com/owainlewis/clojure-mail/pull/47
+* folder search query syntax is extended by @jozseftiborcz in https://github.com/owainlewis/clojure-mail/pull/50
+* Update README.md by @feifanzhou in https://github.com/owainlewis/clojure-mail/pull/51
+* Bumped javax.mail dependency to 1.5.5 and clojure-mail version to 1.0.6 by @nrakochy in https://github.com/owainlewis/clojure-mail/pull/56
+* Update how content types are handled by @skammer in https://github.com/owainlewis/clojure-mail/pull/58
+* Add ability to mark a single message as read by @skammer in https://github.com/owainlewis/clojure-mail/pull/57
+* update README file by @quan-nh in https://github.com/owainlewis/clojure-mail/pull/59
+* Bumped medley 1.0 by @fvides in https://github.com/owainlewis/clojure-mail/pull/61
+* Close FileInputStream in file->message by @amoe in https://github.com/owainlewis/clojure-mail/pull/62
+* Bump version / I want the Medley upgrade by @hacklschorsch in https://github.com/owainlewis/clojure-mail/pull/68
+* Add several missing flags to allow deletion, drafting, etc by @cguckes in https://github.com/owainlewis/clojure-mail/pull/72
+* Update README.md in https://github.com/owainlewis/clojure-mail/pull/73
+* chore: add pull request template by @owainlewis in https://github.com/owainlewis/clojure-mail/pull/78
+* Modernize clojure-mail: bug fixes, CI, docs and maintainer charter by @owainlewis in https://github.com/owainlewis/clojure-mail/pull/79
+
+### New Contributors
+* @erjoalgo made their first contribution in https://github.com/owainlewis/clojure-mail/pull/47
+* @jozseftiborcz made their first contribution in https://github.com/owainlewis/clojure-mail/pull/50
+* @feifanzhou made their first contribution in https://github.com/owainlewis/clojure-mail/pull/51
+* @nrakochy made their first contribution in https://github.com/owainlewis/clojure-mail/pull/56
+* @skammer made their first contribution in https://github.com/owainlewis/clojure-mail/pull/58
+* @quan-nh made their first contribution in https://github.com/owainlewis/clojure-mail/pull/59
+* @fvides made their first contribution in https://github.com/owainlewis/clojure-mail/pull/61
+* @amoe made their first contribution in https://github.com/owainlewis/clojure-mail/pull/62
+* @kwieloch made their first contribution in https://github.com/owainlewis/clojure-mail/pull/65
+* @hacklschorsch made their first contribution in https://github.com/owainlewis/clojure-mail/pull/68
+* @cguckes made their first contribution in https://github.com/owainlewis/clojure-mail/pull/72
+
+**Full Changelog**: https://github.com/owainlewis/clojure-mail/commits/v1.1.0
 <!-- auto-changelog:end -->
 
 ## [1.0.8]
